@@ -7,6 +7,7 @@ import streamlit as st
 
 import core
 import llm
+import tagger
 
 st.set_page_config(page_title="Дәлел — аналитика учебных программ", page_icon="📐", layout="wide",
                    initial_sidebar_state="expanded")
@@ -42,6 +43,21 @@ def load_demo():
     return (pd.read_csv(DATA / "results.csv"), pd.read_csv(DATA / "items.csv"), pd.read_csv(DATA / "plan.csv"))
 
 
+@st.cache_resource(show_spinner="Обучаю модель разметки…")
+def get_tagger():
+    return tagger.train()
+
+
+@st.cache_data(show_spinner=False)
+def load_train():
+    return pd.read_csv(DATA / "train_items.csv")
+
+
+@st.cache_data(show_spinner=False)
+def tagger_quality():
+    return tagger.evaluate(get_tagger())
+
+
 @st.cache_data(show_spinner="Считаю…")
 def run_analysis(results, items, plan, target):
     return core.analyze(results, items, plan, target)
@@ -75,7 +91,8 @@ with st.sidebar:
     if st.session_state.data is not None and st.session_state.synthetic:
         st.markdown('<span class="synth">Демо-данные синтетические</span>', unsafe_allow_html=True)
     p = llm.provider()
-    st.caption(f"ИИ: {'подключён (' + p + ')' if p else 'резервный режим без ключа API'}")
+    st.caption("ИИ: " + (f"языковая модель через API ({p})" if p else
+                         "собственная модель разметки, записка по шаблону (без ключа API)"))
 
 
 def go_to(name):
@@ -354,34 +371,53 @@ elif page == "Часы":
 elif page == "ИИ-разметка":
     st.markdown("## ИИ-разметка заданий по темам программы")
     st.write("Результаты теста приходят по номерам заданий, а не по темам. Модель относит каждое задание "
-             "к одной теме из закрытого списка и сообщает уверенность. Задания с уверенностью ниже 0,7 "
+             "к одной теме из закрытого списка и сообщает уверенность. Задания с низкой уверенностью "
              "уходят методисту на подтверждение.")
-    examples = list(llm.CACHED_TAGS)
-    choice = st.selectbox("Пример задания", ["— свой текст —", *examples])
-    text = st.text_area("Текст задания", value="" if choice.startswith("—") else choice, height=110)
+    use_api = bool(llm.provider())
+    model = get_tagger()
+    acc, test_df = tagger_quality()
+    engine = "языковая модель через API" if use_api else "собственная модель, работает без ключа API и без интернета"
+    st.caption(f"Сейчас работает: {engine}.")
+
+    examples = test_df["text"].tolist()
+    choice = st.selectbox("Пример задания (модель не видела его при обучении)", ["— свой текст —", *examples])
+    text = st.text_area("Текст задания на русском или казахском", value="" if choice.startswith("—") else choice,
+                        height=110)
     if st.button("Разметить", type="primary", disabled=not text.strip()):
-        res = None
-        if llm.provider():
+        res, threshold = None, tagger.REVIEW_BELOW
+        if use_api:
             try:
-                with st.spinner("Модель размечает задание…"):
-                    res = llm.tag_item(text, plan)
+                with st.spinner("Языковая модель размечает задание…"):
+                    res, threshold = llm.tag_item(text, plan), 0.7
             except Exception as e:
-                st.warning(f"Модель недоступна ({type(e).__name__}), показываю резервный результат.")
+                st.warning(f"API недоступен ({type(e).__name__}), разметку сделала собственная модель.")
         if res is None:
-            cached = llm.CACHED_TAGS.get(text.strip())
-            if cached:
-                res = {**cached, "source": "кэш"}
-            else:
-                st.error("Ключ API не задан, а для этого текста нет сохранённой разметки. "
-                         "Выберите пример или добавьте ключ в секреты.")
-        if res:
-            c = st.columns(3)
-            name = names.get(res["topic_code"], "не подходит ни к одной теме")
-            kpi(c[0], res["topic_code"], name)
-            kpi(c[1], f"{res['confidence']:.2f}", "уверенность")
-            kpi(c[2], "на проверку" if res["confidence"] < 0.7 else "принято", "статус")
-            st.markdown(f"**Обоснование:** {res['reason']}")
-            st.caption(f"Источник: {res['source']}")
+            res = tagger.predict(model, text, plan)
+        c = st.columns(3)
+        name = names.get(res["topic_code"], "не подходит ни к одной теме")
+        kpi(c[0], res["topic_code"], name)
+        kpi(c[1], f"{res['confidence']:.2f}", "уверенность")
+        kpi(c[2], "на проверку" if res["confidence"] < threshold else "принято", "статус")
+        st.markdown(f"**Обоснование:** {res['reason']}")
+        if res.get("alternatives"):
+            st.markdown("**Другие варианты:** " + "; ".join(f"{n} ({p:.2f})" for _, n, p in res["alternatives"]))
+        st.caption(f"Источник: {res['source']}. Порог проверки: {threshold:.2f}.")
+
+    with st.expander(f"Как устроена собственная модель и насколько она точна: {acc:.0%} на отложенных заданиях"):
+        st.markdown(
+            f"- Признаки: буквенные n-граммы длиной 2–5 символов (TF-IDF). Они ловят корни и окончания "
+            f"слов и одинаково работают для казахского и русского.\n"
+            f"- Классификатор: логистическая регрессия, обучена на {len(load_train())} заданиях.\n"
+            f"- Проверка: {len(test_df)} заданий, которых модель при обучении не видела. "
+            f"Верно: {int(test_df['ok'].sum())} из {len(test_df)}.\n"
+            f"- Ошибки модели обычно идут с низкой уверенностью, поэтому такие задания отправляются на проверку.\n"
+            f"- Выборка проверки маленькая: на реальных заданиях точность нужно измерить заново.")
+        view = test_df.assign(**{"Верно": test_df["ok"].map({True: "да", False: "нет"}),
+                                 "Уверенность": test_df["confidence"].round(2)})
+        st.dataframe(view[["text", "lang", "topic_code", "pred", "Уверенность", "Верно"]]
+                     .rename(columns={"text": "Задание", "lang": "Язык", "topic_code": "Правильная тема",
+                                      "pred": "Ответ модели"}),
+                     hide_index=True, use_container_width=True)
     with st.expander("Закрытый список тем"):
         st.dataframe(plan[["topic_code", "topic_name"]], hide_index=True, use_container_width=True)
 
@@ -394,7 +430,7 @@ elif page == "Записка":
     lang = st.radio("Язык", ["русский", "казахский"], horizontal=True)
     lcode = "ru" if lang == "русский" else "kk"
     if st.button("Сформировать записку", type="primary"):
-        memo, source = None, "шаблон"
+        memo, source = None, "шаблон по таблице фактов (без API)"
         if llm.provider():
             try:
                 with st.spinner("Модель пишет записку по таблице фактов…"):
