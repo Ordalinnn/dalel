@@ -71,6 +71,16 @@ section[data-testid="stSidebar"] label[data-testid="stRadioOption"]:has(input:fo
 .cause {{display:inline-block; padding: 2px 10px; border: 1.5px solid {RED}; border-radius: 4px;
          font-size:.85rem; font-weight:600; color: {RED}; background: #FFFFFF;}}
 .note {{font-size: .86rem; color: {PENCIL};}}
+.lead {{font-size: 1.05rem; color: {PENCIL}; margin: -.3rem 0 1.4rem 0; max-width: 70ch;}}
+.st-key-weaklist [data-testid="stHorizontalBlock"] {{border-bottom: 1px solid {GRID}; padding: .35rem 0;}}
+.st-key-weaklist {{border-top: 1px solid {GRID}; gap: 0 !important;}}
+.st-key-weaklist p {{margin: 0;}}
+.diag {{border-left: 3px solid {RED}; background: #FDF6F6; padding: .9rem 1.1rem; margin: .2rem 0 1.4rem 0;}}
+.diag .drow {{display: grid; grid-template-columns: 8.5rem 1fr; gap: .8rem; margin-top: .55rem; line-height: 1.5;}}
+.diag .dk {{color: {PENCIL};}}
+h5 {{font-size: 1rem !important; color: {GRAPHITE} !important; margin-top: .6rem;}}
+[data-testid="stSegmentedControl"] button {{font-size: .95rem;}}
+@media (max-width: 700px) {{ .diag .drow {{grid-template-columns: 1fr; gap: .1rem;}} }}
 .verdict {{border-left: 3px solid {INK}; padding: .7rem 1rem; margin: .4rem 0 1rem 0; background: #F3F6FB; color: {GRAPHITE};}}
 .verdict.wrong {{border-left-color: {RED}; background: #FDF3F3;}}
 .verdict .pen {{font-family: 'Caveat', cursive; font-size: 1.35rem; color: {RED}; margin-left: .5rem; white-space: nowrap; line-height: 1;}}
@@ -144,6 +154,23 @@ def run_analysis(results, items, plan, target):
 
 def pct(x):
     return f"{x * 100:.0f}%"
+
+
+PLOT_CFG = {"displayModeBar": False, "responsive": True}
+TB_COLORS = ["#5B6475", INK, "#8FA3D1", "#B07A3E", "#6E9E86"]   # постоянный цвет каждого учебника
+
+
+def tb_color(tb, all_tbs):
+    return TB_COLORS[sorted(all_tbs).index(tb) % len(TB_COLORS)]
+
+
+def chart(fig, height):
+    fig.update_layout(height=height)
+    st.plotly_chart(fig, use_container_width=True, config=PLOT_CFG)
+
+
+def lead(text):
+    st.markdown(f'<p class="lead">{text}</p>', unsafe_allow_html=True)
 
 
 def kpi(col, value, label):
@@ -264,6 +291,7 @@ diag = {d["topic_code"]: d for d in A["diagnoses"]}
 
 if page == "Обзор тем":
     st.markdown("## Что провалено")
+    lead("Какие темы ученики освоили ниже целевого уровня и насколько это надёжно.")
     c = st.columns(4)
     kpi(c[0], f"{len(meta):,}".replace(",", " "), "учеников")
     kpi(c[1], meta["school_id"].nunique(), "школ")
@@ -284,27 +312,39 @@ if page == "Обзор тем":
         st.warning(f"В выбранной группе {len(sub_meta)} учеников. Недостаточно данных для вывода.")
         st.stop()
     m = core.mastery_table(A["scores_all"][mask], sub_meta).merge(plan[["topic_code", "topic_name"]], on="topic_code")
-    m = m.sort_values("mastery")
-    colors = [RED if v < target else GREY for v in m["mastery"]]
-    fig = go.Figure(go.Bar(
-        x=m["mastery"], y=m["topic_name"], orientation="h", marker_color=colors,
-        error_x=dict(type="data", symmetric=False, array=m["hi"] - m["mastery"], arrayminus=m["mastery"] - m["lo"],
-                     color="rgba(60,60,60,.6)", thickness=1.2, width=4),
-        text=[pct(v) for v in m["mastery"]], textposition="inside", insidetextanchor="start",
-        textfont=dict(color="white"),
-        hovertemplate="%{y}: %{x:.0%}<extra></extra>"))
-    fig.add_vline(x=target, line_dash="dash", line_color=ACCENT,
-                  annotation_text=f"цель {pct(target)}", annotation_position="top")
-    fig.update_layout(height=430, margin=dict(l=10, r=20, t=30, b=10), xaxis=dict(range=[0, 1], tickformat=".0%"),
-                      showlegend=False)
-    st.plotly_chart(fig, use_container_width=True)
-    st.markdown(f'<div class="note">Доля верных ответов по теме, линии — 95% интервал (бутстреп по школам). '
+    m = m.sort_values("mastery", ascending=False).reset_index(drop=True)
+    below = m["mastery"] < target
+    fig = go.Figure()
+    fig.add_vrect(x0=0, x1=target, fillcolor=RED, opacity=0.05, line_width=0, layer="below")
+    fig.add_vline(x=target, line_dash="dot", line_color=RED, line_width=1.5)
+    fig.add_annotation(x=target, y=1.02, yref="paper", text=f"цель {pct(target)}", showarrow=False,
+                       font=dict(color=RED, size=12), xanchor="left", xshift=4)
+    for ok, col in ((False, INK), (True, RED)):
+        d = m[below == ok]
+        fig.add_trace(go.Scatter(
+            x=d["mastery"], y=d["topic_name"], mode="markers",
+            marker=dict(size=13, color=col, line=dict(color="white", width=1.5)),
+            error_x=dict(type="data", symmetric=False, array=d["hi"] - d["mastery"],
+                         arrayminus=d["mastery"] - d["lo"], color=col, thickness=2.2, width=0),
+            customdata=d[["lo", "hi"]].to_numpy(),
+            hovertemplate="%{y}<br>освоение %{x:.0%}<br>интервал %{customdata[0]:.0%}–%{customdata[1]:.0%}<extra></extra>"))
+        fig.add_trace(go.Scatter(   # подпись справа от интервала, чтобы не налезала на линию
+            x=d["hi"], y=d["topic_name"], mode="text", text=[f"  <b>{pct(v)}</b>" for v in d["mastery"]],
+            textposition="middle right", textfont=dict(color=col, size=13), cliponaxis=False, hoverinfo="skip"))
+    lo_x = max(0.0, min(m["lo"].min(), target) - 0.08)
+    fig.update_layout(showlegend=False, margin=dict(l=10, r=40, t=30, b=10),
+                      xaxis=dict(range=[lo_x, 1.0], tickformat=".0%", showgrid=True, zeroline=False),
+                      yaxis=dict(categoryorder="array", categoryarray=list(m["topic_name"])[::-1],
+                                 showgrid=False, tickfont=dict(size=13)))
+    chart(fig, 44 * len(m) + 70)
+    st.markdown(f'<div class="note">Точка — доля верных ответов по теме, линия — 95% интервал (бутстреп по школам). Красным — темы ниже цели. '
                 f'В расчёте {len(sub_meta)} учеников, {sub_meta["school_id"].nunique()} школ.</div>',
                 unsafe_allow_html=True)
 
     st.markdown("#### Темы ниже цели")
+    weak_box = st.container(key="weaklist")
     for d in A["diagnoses"]:
-        cc = st.columns([3, 2, 1])
+        cc = weak_box.columns([3, 2, 1], vertical_alignment="center")
         cc[0].markdown(f"**{names[d['topic_code']]}** — {pct(d['mastery'])}")
         cc[1].markdown(f'<span class="cause">{core.CAUSES.get(d["cause"], ("Недостаточно данных",))[0]}</span>',
                        unsafe_allow_html=True)
@@ -325,28 +365,36 @@ if page == "Обзор тем":
 
 elif page == "Учебники":
     st.markdown("## Какой учебник работает лучше")
-    mode = st.radio("Режим сравнения", ["Сырые средние", "С поправками"], horizontal=True)
+    lead("Переключите режим: сырые средние смешивают эффект учебника с составом школ, которые его выбрали.")
+    mode = st.segmented_control("Режим сравнения", ["Сырые средние", "С поправками"], default="Сырые средние",
+                                key="tb_mode") or "Сырые средние"
     adj = mode == "С поправками"
     means = A["adj_means"] if adj else A["raw_means"]
     pairs = A["adj_pairs"] if adj else A["raw_pairs"]
     best = means.sort_values("mean").iloc[-1]["textbook"]
 
+    win_col = INK if adj else RED
     fig = go.Figure()
     for r in means.itertuples():
-        c = ACCENT if r.textbook == best else GREY
+        c = win_col if r.textbook == best else PENCIL
         fig.add_trace(go.Scatter(
-            x=[r.mean], y=[r.textbook], mode="markers+text", marker=dict(size=16, color=c),
+            x=[r.mean], y=[r.textbook], mode="markers+text",
+            marker=dict(size=18, color=c, line=dict(color="white", width=2)),
             error_x=dict(type="data", symmetric=False, array=[r.hi - r.mean], arrayminus=[r.mean - r.lo],
-                         color=c, thickness=2, width=8),
-            text=[pct(r.mean)], textposition="top center", cliponaxis=False,
-            hovertemplate=f"{r.textbook}: %{{x:.1%}}<br>учеников {r.n_students}, школ {r.n_schools}<extra></extra>"))
-    lo = min(means["lo"].min(), 0.55)
-    hi = max(means["hi"].max(), 0.80)
-    fig.update_layout(height=300, showlegend=False, margin=dict(l=10, r=20, t=40, b=10),
-                      xaxis=dict(range=[lo - 0.02, hi + 0.02], tickformat=".0%", title="средний результат теста"),
-                      yaxis=dict(autorange="reversed", range=None), )
-    fig.update_yaxes(range=[len(means) - 0.4, -0.7])
-    st.plotly_chart(fig, use_container_width=True)
+                         color=c, thickness=3, width=0),
+            text=[f"<b>{pct(r.mean)}</b>"], textposition="top center", textfont=dict(color=c, size=15),
+            cliponaxis=False,
+            hovertemplate=(f"{r.textbook}: %{{x:.1%}}<br>интервал {r.lo:.1%}–{r.hi:.1%}"
+                           f"<br>учеников {r.n_students}, школ {r.n_schools}<extra></extra>")))
+    lo = min(A["raw_means"]["lo"].min(), A["adj_means"]["lo"].min()) - 0.02
+    hi = max(A["raw_means"]["hi"].max(), A["adj_means"]["hi"].max()) + 0.02
+    fig.update_layout(showlegend=False, margin=dict(l=10, r=20, t=20, b=10),
+                      xaxis=dict(range=[lo, hi], tickformat=".0%", title="средний результат теста"),
+                      yaxis=dict(categoryorder="array", categoryarray=sorted(means["textbook"])[::-1],
+                                 showgrid=True, tickfont=dict(size=14)))
+    chart(fig, 300)
+    st.markdown('<div class="note">Шкала одинакова в обоих режимах, поэтому видно, как сдвигаются точки.</div>',
+                unsafe_allow_html=True)
 
     if adj:
         st.markdown(f'<div class="verdict">С поправкой на прошлый балл, тип местности и язык обучения '
@@ -368,20 +416,37 @@ elif page == "Учебники":
     st.dataframe(pd.DataFrame(rows), hide_index=True, use_container_width=True)
 
     st.markdown("#### Почему ответы расходятся")
-    ba = A["by_area"]
+    ba = A["by_area"].copy()
+    tbs = sorted(ba["textbook"].unique())
+    allrow = (A["raw_means"][["textbook", "mean", "n_students"]]
+              .rename(columns={"n_students": "size"}).assign(area="все ученики"))
+    rows_ = pd.concat([ba, allrow], ignore_index=True)
+    order = [*sorted(ba["area"].unique()), "все ученики"]
+    smax = rows_["size"].max()
     fig2 = go.Figure()
-    for tb in sorted(ba["textbook"].unique()):
-        d = ba[ba["textbook"] == tb]
-        fig2.add_trace(go.Bar(name=tb, x=d["area"], y=d["mean"], text=[pct(v) for v in d["mean"]],
-                              customdata=d["size"], hovertemplate=f"{tb}, %{{x}}: %{{y:.0%}}, учеников %{{customdata}}<extra></extra>"))
-    fig2.update_layout(barmode="group", height=320, margin=dict(l=10, r=10, t=10, b=10),
-                       yaxis=dict(tickformat=".0%", range=[0, 1]),
-                       colorway=["#7C8A99", ACCENT, "#B9C3CE"], legend=dict(orientation="h", y=1.1))
-    st.plotly_chart(fig2, use_container_width=True)
+    fig2.add_hrect(y0=-0.5, y1=0.5, fillcolor=PENCIL, opacity=0.08, line_width=0)   # строка «все ученики»
+    for tb in tbs:
+        d = rows_[rows_["textbook"] == tb].set_index("area").reindex(order).reset_index()
+        col = tb_color(tb, tbs)
+        fig2.add_trace(go.Scatter(
+            x=d["mean"], y=d["area"], mode="markers+text", name=tb,
+            marker=dict(size=10 + 34 * (d["size"] / smax) ** 0.5, color=col, opacity=0.9,
+                        line=dict(color="white", width=1.5)),
+            text=[f"{tb.split()[-1]} {pct(v)}" for v in d["mean"]], textposition="top center",
+            textfont=dict(color=col, size=13), cliponaxis=False, customdata=d["size"],
+            hovertemplate=f"{tb}, %{{y}}: %{{x:.1%}}<br>учеников %{{customdata}}<extra></extra>"))
+    fig2.update_layout(margin=dict(l=10, r=20, t=10, b=10), showlegend=False,
+                       xaxis=dict(tickformat=".0%", title="средний результат теста"),
+                       yaxis=dict(categoryorder="array", categoryarray=order[::-1], tickfont=dict(size=14),
+                                  range=[-0.6, len(order) - 0.3]))
+    chart(fig2, 330)
     share = meta.groupby("textbook")["area"].apply(lambda s: (s == "город").mean())
+    st.markdown('<div class="note">Размер точки — число учеников. Нижняя строка — общее среднее без поправки.</div>',
+                unsafe_allow_html=True)
     st.write("Доля городских учеников: " + ", ".join(f"«{k}» {pct(v)}" for k, v in share.items()) +
-             ". Внутри города и внутри села порядок учебников один, а в общем среднем он переворачивается: "
-             "учебник с городскими школами выигрывает за счёт состава учеников (парадокс Симпсона).")
+             ". И в городе, и в селе порядок учебников один, а в общем среднем он переворачивается: "
+             "учебник, который чаще берут городские школы, выигрывает за счёт состава учеников. "
+             "Это парадокс Симпсона.")
 
 
 # ---------- тема ----------
@@ -393,6 +458,7 @@ elif page == "Тема":
     st.session_state.topic = code
     mrow = A["mastery"].set_index("topic_code").loc[code]
     st.markdown(f"## {names[code]}")
+    lead("Почему тема проседает и какую меру выбрать: часы, материалы к учебнику, поддержку школ или замену задания.")
     c = st.columns(3)
     kpi(c[0], pct(mrow["mastery"]), "освоение темы")
     kpi(c[1], f"{pct(mrow['lo'])}–{pct(mrow['hi'])}", "95% интервал")
@@ -402,36 +468,50 @@ elif page == "Тема":
     if code in diag:
         d = diag[code]
         title, action = core.CAUSES.get(d["cause"], ("Недостаточно данных", "Собрать больше данных."))
-        st.markdown(f'<span class="cause">{title}</span>', unsafe_allow_html=True)
-        st.markdown(f"**Почему:** {d['details']}")
-        st.markdown(f"**Что делать:** {action}")
+        st.markdown(f'''<div class="diag"><span class="cause">{title}</span>
+<div class="drow"><span class="dk">Почему</span><span>{d['details']}</span></div>
+<div class="drow"><span class="dk">Что делать</span><span>{action}</span></div></div>''', unsafe_allow_html=True)
     else:
-        st.success("Тема освоена на уровне цели или выше.")
+        st.markdown('<div class="verdict">Тема освоена на уровне цели или выше. Мер не требуется.</div>',
+                    unsafe_allow_html=True)
 
     sc = A["scores_clean"] if code in A["scores_clean"] else A["scores_all"]
     t1, t2 = st.columns(2)
     with t1:
-        st.markdown("##### По учебникам, с поправкой на общий уровень")
+        st.markdown("##### С каким учебником тема проседает")
         eff = core.textbook_topic_effect(sc, meta, code)
-        fig = go.Figure(go.Bar(x=eff["effect"] * 100, y=eff["textbook"], orientation="h",
-                               marker_color=[RED if (e <= -core.TEXTBOOK_GAP and h < 0) else GREY
-                                             for e, h in zip(eff["effect"], eff["hi"])],
-                               error_x=dict(type="data", symmetric=False, array=(eff["hi"] - eff["effect"]) * 100,
-                                            arrayminus=(eff["effect"] - eff["lo"]) * 100, color="rgba(60,60,60,.6)"),
-                               hovertemplate="%{y}: %{x:+.1f} п.п.<extra></extra>"))
-        fig.add_vline(x=0, line_color="rgba(120,120,120,.8)")
-        fig.update_layout(height=230, margin=dict(l=10, r=10, t=10, b=10),
-                          xaxis_title="п.п. относительно остальных учебников")
-        st.plotly_chart(fig, use_container_width=True)
+        gap = core.TEXTBOOK_GAP * 100
+        span = max(gap + 4, float((eff[["lo", "hi"]].abs().max().max()) * 100) + 3)
+        fig = go.Figure()
+        fig.add_vrect(x0=-span, x1=-gap, fillcolor=RED, opacity=0.06, line_width=0, layer="below")
+        fig.add_annotation(x=-span, y=0, yref="paper", text=" заметно хуже", showarrow=False,
+                           font=dict(color=RED, size=11), xanchor="left", yanchor="bottom")
+        fig.add_vline(x=0, line_color=PENCIL, line_width=1)
+        for r in eff.itertuples():
+            bad = r.effect <= -core.TEXTBOOK_GAP and r.hi < 0
+            col = RED if bad else INK
+            fig.add_trace(go.Scatter(
+                x=[r.effect * 100], y=[r.textbook], mode="markers+text",
+                marker=dict(size=13, color=col, line=dict(color="white", width=1.5)),
+                error_x=dict(type="data", symmetric=False, array=[(r.hi - r.effect) * 100],
+                             arrayminus=[(r.effect - r.lo) * 100], color=col, thickness=2.2, width=0),
+                text=[f"{r.effect * 100:+.0f} п.п."], textposition="top center", textfont=dict(color=col, size=12),
+                cliponaxis=False, hovertemplate=f"{r.textbook}: %{{x:+.1f}} п.п.<extra></extra>"))
+        fig.update_layout(showlegend=False, margin=dict(l=10, r=10, t=24, b=10),
+                          xaxis=dict(range=[-span, span], title="п.п. относительно других учебников",
+                                     zeroline=False),
+                          yaxis=dict(categoryorder="array", categoryarray=sorted(eff["textbook"])[::-1],
+                                     tickfont=dict(size=13)))
+        chart(fig, 250)
     with t2:
-        st.markdown("##### Школы ниже ожидаемого")
+        st.markdown("##### Какие школы отстают")
         sch = core.school_topic_effect(sc, meta, code)
         sch = sch.assign(**{"Отклонение, п.п.": (sch["shrunk"] * 100).round(1), "Освоение": (sch["score"] * 100).round(0)})
         sch["Статус"] = [("мало учеников" if n < 20 else "ниже ожидаемого" if s <= -core.SCHOOL_GAP else "")
                          for n, s in zip(sch["n"], sch["shrunk"])]
         st.dataframe(sch[["school_id", "n", "Освоение", "Отклонение, п.п.", "Статус"]].head(10)
                      .rename(columns={"school_id": "Школа", "n": "Учеников"}),
-                     hide_index=True, use_container_width=True, height=230)
+                     hide_index=True, use_container_width=True, height=250)
 
     st.markdown("##### Задания темы")
     ti = A["items"][A["items"]["topic_code"] == code].copy()
@@ -451,8 +531,26 @@ elif page == "Часы":
     st.markdown("## Перераспределение часов")
     h = A["hours"].copy()
     total = int(h["hours"].sum())
-    st.write(f"Сумма часов не меняется: **{total} ч**. Часы получают темы с диагнозом «трудна сама тема», "
-             "отдают темы с запасом над целью не меньше 10 п.п. Изменение темы не больше 20% её часов.")
+    lead(f"Сумма часов не меняется: {total} ч. Часы получают темы с диагнозом «трудна сама тема», "
+         "отдают темы с запасом над целью не меньше 10 п.п. Изменение темы не больше 20% её часов.")
+    ch = h[h["delta"] != 0].sort_values("delta", ascending=False)
+    if len(ch):
+        fig = go.Figure(go.Bar(
+            x=ch["delta"], y=ch["topic_name"], orientation="h",
+            marker_color=[INK if v > 0 else PENCIL for v in ch["delta"]],
+            text=[f"{v:+d} ч  ({o} → {n})" for v, o, n in zip(ch["delta"], ch["hours"], ch["new_hours"])],
+            textposition="outside", cliponaxis=False, textfont=dict(size=13),
+            hovertemplate="%{y}: %{x:+d} ч<extra></extra>"))
+        fig.add_vline(x=0, line_color=GRAPHITE, line_width=1)
+        m_ = max(ch["delta"].abs()) + 2.5
+        fig.update_layout(showlegend=False, margin=dict(l=10, r=10, t=10, b=10), bargap=0.45,
+                          xaxis=dict(range=[-m_, m_], title="изменение, часов", dtick=1, zeroline=False),
+                          yaxis=dict(categoryorder="array", categoryarray=list(ch["topic_name"])[::-1],
+                                     tickfont=dict(size=13)))
+        chart(fig, 52 * len(ch) + 80)
+    else:
+        st.markdown('<div class="verdict">При текущей цели перераспределять часы не нужно.</div>',
+                    unsafe_allow_html=True)
     view = h.assign(**{
         "Тема": h["topic_name"], "Освоение": (h["mastery"] * 100).round(0).astype(int).astype(str) + "%",
         "Было, ч": h["hours"], "Предлагается, ч": h["new_hours"],
@@ -462,9 +560,9 @@ elif page == "Часы":
 
     def color(v):
         if isinstance(v, str) and v.startswith("+"):
-            return f"color: {GREEN}; font-weight: 600"
+            return f"color: {INK}; font-weight: 600"
         if isinstance(v, str) and v.startswith("-"):
-            return f"color: {RED}; font-weight: 600"
+            return f"color: {PENCIL}; font-weight: 600"
         return ""
 
     st.dataframe(view.style.map(color, subset=["Изменение"]), hide_index=True, use_container_width=True,
@@ -477,10 +575,10 @@ elif page == "Часы":
 # ---------- ИИ-разметка ----------
 
 elif page == "ИИ-разметка":
-    st.markdown("## ИИ-разметка заданий по темам программы")
-    st.write("Результаты теста приходят по номерам заданий, а не по темам. Модель относит каждое задание "
-             "к одной теме из закрытого списка и сообщает уверенность. Задания с низкой уверенностью "
-             "уходят методисту на подтверждение.")
+    st.markdown("## ИИ-разметка заданий")
+    lead("Результаты теста приходят по номерам заданий, а не по темам. Модель относит каждое задание "
+         "к одной теме из закрытого списка и сообщает уверенность. Задания с низкой уверенностью "
+         "уходят методисту на подтверждение.")
     use_api = bool(llm.provider())
     model = get_tagger()
     acc, test_df = tagger_quality()
@@ -534,6 +632,7 @@ elif page == "ИИ-разметка":
 
 elif page == "Записка":
     st.markdown("## Записка для методического совета")
+    lead("Текст собирается только из рассчитанных чисел, а каждое число в нём сверяется с расчётом.")
     facts = core.build_facts(A)
     lang = st.radio("Язык", ["русский", "казахский"], horizontal=True)
     lcode = "ru" if lang == "русский" else "kk"
