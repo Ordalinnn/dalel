@@ -3,35 +3,114 @@ from pathlib import Path
 
 import pandas as pd
 import plotly.graph_objects as go
+import plotly.io as pio
 import streamlit as st
 
 import core
 import llm
 import tagger
 
-st.set_page_config(page_title="Дәлел — аналитика учебных программ", page_icon="📐", layout="wide",
-                   initial_sidebar_state="expanded")
+st.set_page_config(page_title="Дәлел — аналитика учебных программ", page_icon="✒️", layout="wide",
+                   initial_sidebar_state="auto")
 
 DATA = Path(__file__).parent / "data"
-ACCENT = "#1F5FAE"
-GREY = "#9AA3AE"
-RED = "#B9473F"
+INK = "#1D3A8A"        # синяя паста
+RED = "#C62828"        # красная ручка учителя
+PENCIL = "#8A93A3"     # карандаш: нейтральные данные
+GRAPHITE = "#2B3140"   # основной текст
+GRID = "#E4EBF5"       # клетка тетради
 GREEN = "#2E7D5B"
+ACCENT, GREY = INK, PENCIL
 
-st.markdown("""
+FONTS_CSS = (Path(__file__).parent / "static" / "fonts.css").read_text(encoding="utf-8")
+
+pio.templates["dalel"] = go.layout.Template(layout=go.Layout(
+    font=dict(family="Golos Text, sans-serif", color=GRAPHITE, size=13),
+    paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)",
+    xaxis=dict(gridcolor=GRID, zerolinecolor=GRID, linecolor=GRID, tickfont=dict(color=PENCIL)),
+    yaxis=dict(gridcolor=GRID, zerolinecolor=GRID, linecolor=GRID, tickfont=dict(color=GRAPHITE)),
+    hoverlabel=dict(font=dict(family="Golos Text, sans-serif")),
+    colorway=[INK, PENCIL, "#B8C2D6"],
+))
+pio.templates.default = "plotly_white+dalel"
+
+st.markdown(f"""
 <style>
-#MainMenu, footer {visibility: hidden;}
-.block-container {padding-top: 2rem; max-width: 1150px;}
-h1, h2, h3 {letter-spacing: -0.01em;}
-.kpi {border: 1px solid rgba(128,128,128,.25); border-radius: 10px; padding: 14px 16px;}
-.kpi .v {font-size: 1.9rem; font-weight: 650; line-height: 1.1;}
-.kpi .l {font-size: .85rem; opacity: .7;}
-.card {border: 1px solid rgba(128,128,128,.25); border-radius: 12px; padding: 18px 20px; height: 100%;}
-.card h4 {margin: 0 0 .4rem 0;}
-.cause {display:inline-block; padding: 3px 10px; border-radius: 999px; font-size:.85rem; font-weight:600;
-        background: rgba(31,95,174,.12); color: #1F5FAE;}
-.note {font-size: .85rem; opacity: .7;}
-.synth {font-size:.8rem; padding: 2px 8px; border-radius: 6px; background: rgba(185,71,63,.12); color:#B9473F;}
+{FONTS_CSS}
+html, body, .stApp, .stMarkdown, p, li, label, input, textarea, button, [data-testid="stWidgetLabel"] {{
+  font-family: 'Golos Text', sans-serif;
+}}
+#MainMenu, footer {{visibility: hidden;}}
+.block-container {{padding-top: 2.2rem; max-width: 1120px;}}
+h1, h2, h3, h4 {{font-family: 'Unbounded', sans-serif !important; color: {INK}; letter-spacing: -0.01em;}}
+h2 {{font-size: 1.7rem !important; font-weight: 700 !important; line-height: 1.2 !important;}}
+h3, h4, h5 {{font-weight: 500 !important;}}
+p, li {{max-width: 75ch; line-height: 1.6;}}
+
+/* боковая панель: поля тетради */
+section[data-testid="stSidebar"] {{background: #FFFFFF; border-right: 2px solid #F2C4C4;}}
+.brand {{font-family: 'Unbounded', sans-serif; font-weight: 700; font-size: 1.6rem; color: {INK}; margin: 0;}}
+.brand-sub {{color: {PENCIL}; font-size: .88rem; margin: .2rem 0 1.2rem 0; line-height: 1.4;}}
+section[data-testid="stSidebar"] div[role="radiogroup"] {{gap: 0;}}
+section[data-testid="stSidebar"] div[role="radiogroup"] label {{
+  padding: .45rem .7rem; margin: 0; border-left: 3px solid transparent; border-radius: 0; width: 100%;
+}}
+section[data-testid="stSidebar"] label[data-testid="stRadioOption"] > div > div:first-child:not([data-testid]) {{display: none;}}
+section[data-testid="stSidebar"] label[data-testid="stRadioOption"][data-selected="true"] {{
+  border-left-color: {INK}; background: #EEF2FA;
+}}
+section[data-testid="stSidebar"] label[data-testid="stRadioOption"][data-selected="true"] p {{color: {INK}; font-weight: 600;}}
+section[data-testid="stSidebar"] label[data-testid="stRadioOption"]:hover p {{color: {INK};}}
+section[data-testid="stSidebar"] label[data-testid="stRadioOption"]:has(input:focus-visible) {{outline: 2px solid {INK}; outline-offset: -2px;}}
+
+/* показатели */
+.kpi {{border-left: 2px solid {GRID}; padding: .2rem 0 .2rem 1rem;}}
+.kpi .v {{font-family: 'Unbounded', sans-serif; font-size: 1.9rem; font-weight: 500; color: {INK}; line-height: 1.15;}}
+.kpi .l {{font-size: .88rem; color: {PENCIL}; margin-top: .2rem;}}
+
+.cause {{display:inline-block; padding: 2px 10px; border: 1.5px solid {RED}; border-radius: 4px;
+         font-size:.85rem; font-weight:600; color: {RED}; background: #FFFFFF;}}
+.note {{font-size: .86rem; color: {PENCIL};}}
+.verdict {{border-left: 3px solid {INK}; padding: .7rem 1rem; margin: .4rem 0 1rem 0; background: #F3F6FB; color: {GRAPHITE};}}
+.verdict.wrong {{border-left-color: {RED}; background: #FDF3F3;}}
+.verdict .pen {{font-family: 'Caveat', cursive; font-size: 1.35rem; color: {RED}; margin-left: .5rem; white-space: nowrap; line-height: 1;}}
+.synth {{font-size:.82rem; color:{RED}; border-bottom: 1.5px solid {RED};}}
+.side-note {{font-size: .82rem; color: {PENCIL}; line-height: 1.45;}}
+
+/* главная: лист в клетку */
+.hero {{
+  position: relative; padding: 2.4rem 2rem 2.2rem 3.2rem; margin-bottom: 1.6rem;
+  background-color: #FFFFFF;
+  background-image: linear-gradient({GRID} 1px, transparent 1px), linear-gradient(90deg, {GRID} 1px, transparent 1px);
+  background-size: 22px 22px; border: 1px solid {GRID};
+}}
+.hero::before {{content: ""; position: absolute; top: 0; bottom: 0; left: 2rem; width: 2px; background: #F2A6A6;}}
+.hero h1 {{font-size: clamp(1.7rem, 4vw, 2.9rem) !important; font-weight: 700 !important; line-height: 1.12 !important;
+          margin: 0 0 .7rem 0; padding: 0; max-width: 16ch;}}
+.hero .sub {{font-size: 1.12rem; color: {GRAPHITE}; max-width: 54ch; margin: 0 0 2rem 0; line-height: 1.55;}}
+.flip {{background: rgba(255,255,255,.92); display: inline-block; padding: 1.1rem 1.4rem 1.2rem 1.4rem;
+        border: 1px solid {GRID}; max-width: 100%;}}
+.flip .q {{font-weight: 600; color: {GRAPHITE}; margin-bottom: .9rem;}}
+.flip .row {{display: flex; align-items: baseline; gap: 1rem; flex-wrap: wrap; padding: .35rem 0;}}
+.flip .lbl {{width: 15rem; color: {PENCIL}; font-size: .95rem;}}
+.flip .ans {{font-family: 'Unbounded', sans-serif; font-size: 1.25rem; color: {INK};}}
+.flip .wrong {{text-decoration: line-through; text-decoration-color: {RED}; text-decoration-thickness: 2.5px; color: {PENCIL};}}
+.flip .pen {{font-family: 'Caveat', cursive; font-size: 1.45rem; color: {RED}; line-height: 1;}}
+.flip .src {{font-size: .82rem; color: {PENCIL}; margin-top: .7rem;}}
+
+/* три вопроса: строки тетради, не карточки */
+.ruled {{border-top: 1px solid {GRID}; margin: .4rem 0 1.4rem 0;}}
+.ruled .r {{display: grid; grid-template-columns: 13rem 1fr; gap: 1.2rem; padding: .9rem 0; border-bottom: 1px solid {GRID};}}
+.ruled .t {{font-family: 'Unbounded', sans-serif; font-weight: 500; color: {INK}; font-size: 1rem;}}
+.ruled .d {{color: {GRAPHITE}; max-width: 62ch;}}
+
+@media (max-width: 700px) {{
+  .hero {{padding: 1.6rem 1rem 1.6rem 2rem;}}
+  .hero::before {{left: 1.1rem;}}
+  .flip .lbl {{width: auto;}}
+  .ruled .r {{grid-template-columns: 1fr; gap: .3rem;}}
+}}
+@media (prefers-reduced-motion: reduce) {{ * {{transition: none !important; animation: none !important;}} }}
 </style>
 """, unsafe_allow_html=True)
 
@@ -83,16 +162,17 @@ if "nav_to" in st.session_state:          # переход по кнопке: м
 PAGES = ["Главная", "Обзор тем", "Учебники", "Тема", "Часы", "ИИ-разметка", "Записка"]
 
 with st.sidebar:
-    st.markdown("### Дәлел")
-    st.caption("Учебник выбирают доказательства, а не мнения")
+    st.markdown('<p class="brand">Дәлел</p><p class="brand-sub">Учебник выбирают доказательства, а не мнения</p>',
+                unsafe_allow_html=True)
     page = st.radio("Раздел", PAGES, key="page", label_visibility="collapsed")
     st.divider()
     target = st.slider("Целевой уровень освоения темы", 0.50, 0.80, 0.60, 0.01, format="%.2f")
     if st.session_state.data is not None and st.session_state.synthetic:
         st.markdown('<span class="synth">Демо-данные синтетические</span>', unsafe_allow_html=True)
     p = llm.provider()
-    st.caption("ИИ: " + (f"языковая модель через API ({p})" if p else
-                         "собственная модель разметки, записка по шаблону (без ключа API)"))
+    st.markdown('<p class="side-note">' + ("ИИ: языковая модель через API" if p else
+                "ИИ: собственная модель разметки, записка по шаблону. Работает без ключа API.") + "</p>",
+                unsafe_allow_html=True)
 
 
 def go_to(name):
@@ -103,17 +183,29 @@ def go_to(name):
 # ---------- главная ----------
 
 if page == "Главная":
-    st.markdown("## Оқулықты пікір емес, дәлел таңдайды")
-    st.markdown("#### Учебник выбирают доказательства, а не мнения")
-    st.write("«Дәлел» превращает выгрузку результатов теста в три ответа для методиста: "
-             "что провалено, почему и что изменить. Числа считает проверяемый код, "
-             "ИИ размечает задания по темам и пишет записку для методсовета.")
-    c1, c2, c3 = st.columns(3)
-    for c, t, d in ((c1, "Что провалено", "Освоение каждой темы с интервалом и разрезами город/село, язык обучения."),
-                    (c2, "Почему", "Диагноз причины: трудна тема, подводит учебник, отстают школы или плохое задание."),
-                    (c3, "Что изменить", "Честное сравнение учебников и перераспределение часов при той же сумме.")):
-        c.markdown(f'<div class="card"><h4>{t}</h4>{d}</div>', unsafe_allow_html=True)
-    st.write("")
+    demo = run_analysis(*load_demo(), 0.60)
+    raw = demo["raw_means"].sort_values("mean", ascending=False).iloc[0]
+    adj = demo["adj_means"].sort_values("mean", ascending=False).iloc[0]
+    adj_of_raw = demo["adj_means"].set_index("textbook").loc[raw["textbook"], "mean"]
+    n_txt = f"{len(demo['meta']):,}".replace(",", " ")
+    st.markdown(f"""
+<div class="hero">
+  <h1>Оқулықты пікір емес, дәлел таңдайды</h1>
+  <p class="sub">Учебник выбирают доказательства, а не мнения. «Дәлел» берёт результаты теста и показывает
+  методисту, какие темы провалены, почему и что изменить.</p>
+  <div class="flip">
+    <div class="q">Какой учебник даёт лучший результат?</div>
+    <div class="row"><span class="lbl">По средним баллам</span>
+      <span class="ans wrong">{raw['textbook']}, {pct(raw['mean'])}</span>
+      <span class="pen">его чаще берут городские школы</span></div>
+    <div class="row"><span class="lbl">С поправкой на состав школ</span>
+      <span class="ans">{adj['textbook']}, {pct(adj['mean'])}</span>
+      <span class="pen">а у «{raw['textbook']}» {pct(adj_of_raw)}</span></div>
+    <div class="src">Синтетические демо-данные: {n_txt} учеников, {demo['meta']['school_id'].nunique()} школ,
+    математика 6 класса.</div>
+  </div>
+</div>
+""", unsafe_allow_html=True)
     b1, b2 = st.columns([1, 2])
     if b1.button("Открыть демо", type="primary", use_container_width=True):
         st.session_state.data = load_demo()
@@ -138,6 +230,19 @@ if page == "Главная":
                 st.session_state.data = (r, i, pl)
                 st.session_state.synthetic = False
                 go_to("Обзор тем")
+    st.markdown("""
+<div class="ruled">
+  <div class="r"><div class="t">Что провалено</div>
+    <div class="d">Освоение каждой темы с 95% интервалом. Можно сравнить город и село, казахский и русский язык обучения.</div></div>
+  <div class="r"><div class="t">Почему</div>
+    <div class="d">Для каждой слабой темы система называет причину: трудна сама тема, подводит учебник,
+    отстают отдельные школы или в тесте плохое задание.</div></div>
+  <div class="r"><div class="t">Что изменить</div>
+    <div class="d">Честное сравнение учебников, перераспределение часов при той же сумме и готовая записка
+    для методсовета на казахском и русском.</div></div>
+</div>
+<p class="note">Все числа считает проверяемый код. ИИ размечает задания по темам программы и пишет текст записки.</p>
+""", unsafe_allow_html=True)
     st.stop()
 
 if st.session_state.data is None:
@@ -244,11 +349,14 @@ elif page == "Учебники":
     st.plotly_chart(fig, use_container_width=True)
 
     if adj:
-        st.success(f"С поправкой на прошлый балл, тип местности и язык обучения лучший результат у «{best}».")
+        st.markdown(f'<div class="verdict">С поправкой на прошлый балл, тип местности и язык обучения '
+                    f'лучший результат у «{best}».</div>', unsafe_allow_html=True)
         st.markdown('<div class="note">Учебники сравниваются на одном и том же «среднем» ученике. '
                     'Интервалы учитывают, что ученики одной школы похожи друг на друга.</div>', unsafe_allow_html=True)
     else:
-        st.warning(f"По сырым средним лучший — «{best}». Но учебники выбирают школы с разным составом учеников.")
+        st.markdown(f'<div class="verdict wrong">По сырым средним лучший — «{best}». Но учебники выбирают школы '
+                    f'с разным составом учеников.<span class="pen">проверьте с поправками</span></div>',
+                    unsafe_allow_html=True)
 
     rows = []
     for r in pairs.itertuples():
