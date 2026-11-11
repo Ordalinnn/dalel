@@ -7,6 +7,7 @@ import plotly.io as pio
 import streamlit as st
 
 import core
+import library
 import llm
 import tagger
 
@@ -78,6 +79,8 @@ section[data-testid="stSidebar"] label[data-testid="stRadioOption"]:has(input:fo
 .diag {{border-left: 3px solid {RED}; background: #FDF6F6; padding: .9rem 1.1rem; margin: .2rem 0 1.4rem 0;}}
 .diag .drow {{display: grid; grid-template-columns: 8.5rem 1fr; gap: .8rem; margin-top: .55rem; line-height: 1.5;}}
 .diag .dk {{color: {PENCIL};}}
+.book {{padding: .45rem 0; border-bottom: 1px solid {GRID}; line-height: 1.5;}}
+.book .why {{color: {PENCIL}; font-size: .92rem;}}
 h5 {{font-size: 1rem !important; color: {GRAPHITE} !important; margin-top: .6rem;}}
 [data-testid="stSegmentedControl"] button {{font-size: .95rem;}}
 @media (max-width: 700px) {{ .diag .drow {{grid-template-columns: 1fr; gap: .1rem;}} }}
@@ -173,6 +176,12 @@ def lead(text):
     st.markdown(f'<p class="lead">{text}</p>', unsafe_allow_html=True)
 
 
+def books_html(books, lang="ru"):
+    return "".join(f'<div class="book"><b>{library.title_line(b)}</b><br>'
+                   f'<span class="why">{b["why_kk"] if lang == "kk" else b["why_ru"]}</span></div>'
+                   for b in books)
+
+
 def kpi(col, value, label):
     col.markdown(f'<div class="kpi"><div class="v">{value}</div><div class="l">{label}</div></div>',
                  unsafe_allow_html=True)
@@ -186,7 +195,7 @@ if "page" not in st.session_state:
 if "nav_to" in st.session_state:          # переход по кнопке: меняем выбор меню до его отрисовки
     st.session_state.page = st.session_state.pop("nav_to")
 
-PAGES = ["Главная", "Обзор тем", "Учебники", "Тема", "Часы", "ИИ-разметка", "Записка"]
+PAGES = ["Главная", "Обзор тем", "Учебники", "Тема", "Часы", "ИИ-разметка", "Записка", "Библиотека"]
 
 with st.sidebar:
     st.markdown('<p class="brand">Дәлел</p><p class="brand-sub">Учебник выбирают доказательства, а не мнения</p>',
@@ -270,6 +279,26 @@ if page == "Главная":
 </div>
 <p class="note">Все числа считает проверяемый код. ИИ размечает задания по темам программы и пишет текст записки.</p>
 """, unsafe_allow_html=True)
+    st.stop()
+
+
+# ---------- библиотека ----------
+
+if page == "Библиотека":     # данные не нужны: библиотека открывается без загрузки теста
+    st.markdown("## Библиотека")
+    lead("Что почитать по каждому диагнозу. Система называет причину провала темы, "
+         "а здесь книги, которые помогают с этой причиной работать.")
+    r1, r2 = st.columns([2, 1])
+    role = r1.segmented_control("Для кого", ["Все", *library.ROLES], default="Все", key="lib_role") or "Все"
+    lang = r2.radio("Язык пояснений", ["русский", "казахский"], horizontal=True, key="lib_lang")
+    causes = list(library.BOOKS) if role == "Все" else library.ROLES[role]
+    for cause in causes:
+        st.markdown(f'<span class="cause">{core.CAUSES[cause][0]}</span>', unsafe_allow_html=True)
+        st.markdown(books_html(library.books_for(cause), "kk" if lang == "казахский" else "ru"),
+                    unsafe_allow_html=True)
+        st.write("")
+    st.markdown('<div class="note">Книги к диагнозу темы также показаны на странице «Тема» '
+                'в блоке «Что почитать».</div>', unsafe_allow_html=True)
     st.stop()
 
 if st.session_state.data is None:
@@ -471,6 +500,10 @@ elif page == "Тема":
         st.markdown(f'''<div class="diag"><span class="cause">{title}</span>
 <div class="drow"><span class="dk">Почему</span><span>{d['details']}</span></div>
 <div class="drow"><span class="dk">Что делать</span><span>{action}</span></div></div>''', unsafe_allow_html=True)
+        books = library.books_for(d["cause"])
+        if books:
+            with st.expander("Что почитать"):
+                st.markdown(books_html(books), unsafe_allow_html=True)
     else:
         st.markdown('<div class="verdict">Тема освоена на уровне цели или выше. Мер не требуется.</div>',
                     unsafe_allow_html=True)
