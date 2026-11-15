@@ -705,9 +705,30 @@ if page == "Обзор тем":
                       xaxis=dict(range=[lo_x, 1.0], tickformat=".0%", showgrid=True, zeroline=False),
                       yaxis=dict(categoryorder="array", categoryarray=list(m["topic_name"])[::-1],
                                  showgrid=False, tickfont=dict(size=13)))
-    chart(fig, 44 * len(m) + 70)
-    howto(("dot", "точка: доля правильных ответов по теме"),
-          ("red", "красные темы ниже цели"), ("goal", f"пунктир: целевой уровень {pct(target)}"))
+    # Простой вид: горизонтальные полосы легче читать без статистических деталей.
+    simple = go.Figure()
+    simple.add_vrect(x0=0, x1=target, fillcolor=RED, opacity=0.055, line_width=0, layer="below")
+    simple.add_vline(x=target, line_dash="dash", line_color=RED, line_width=2)
+    simple.add_trace(go.Bar(
+        x=m["mastery"], y=m["topic_name"], orientation="h",
+        marker_color=[RED if v < target else INK for v in m["mastery"]],
+        text=[pct(v) for v in m["mastery"]], textposition="outside",
+        textfont=dict(size=13), cliponaxis=False,
+        customdata=m[["lo", "hi"]].to_numpy(),
+        hovertemplate="%{y}<br>Правильно отвечают: %{x:.0%}<br>95% интервал: %{customdata[0]:.0%}–%{customdata[1]:.0%}<extra></extra>"
+    ))
+    simple.update_layout(
+        showlegend=False, margin=dict(l=10, r=45, t=35, b=15),
+        xaxis=dict(range=[0, 1.12], tickformat=".0%", title="Доля правильных ответов", showgrid=True, zeroline=False),
+        yaxis=dict(categoryorder="array", categoryarray=list(m["topic_name"])[::-1], showgrid=False, tickfont=dict(size=13)),
+        annotations=[dict(x=target, y=1.08, xref="x", yref="paper", text=f"Цель — {pct(target)}",
+                          showarrow=False, xanchor="left", font=dict(color=RED, size=12))]
+    )
+    st.caption("Читайте так: длина полосы — сколько учеников ответили правильно. Красный цвет означает, что тема пока ниже выбранной цели.")
+    chart(simple, 44 * len(m) + 75)
+    with st.expander("Показать подробный график с 95% интервалами"):
+        st.caption("Точка — наблюдаемый результат. Тонкая линия — диапазон неопределённости оценки. Чем она короче, тем точнее оценка.")
+        chart(fig, 44 * len(m) + 70)
     with st.expander("Как понимать график и 95% интервал"):
         st.markdown(
             "- **Точка** показывает наблюдаемую долю правильных ответов по теме.\n"
@@ -781,9 +802,12 @@ elif page == "Учебники":
                       xaxis=dict(range=[lo, hi], tickformat=".0%", title="средний результат теста"),
                       yaxis=dict(categoryorder="array", categoryarray=sorted(means["textbook"])[::-1],
                                  showgrid=True, tickfont=dict(size=14)))
+    st.caption("Каждая точка — средний результат учеников с этим учебником. Чем правее точка, тем выше результат. Полоски показывают неопределённость оценки.")
     chart(fig, 300)
-    howto(("dot", "точка: средний результат по учебнику; полоска: где почти наверняка лежит настоящий результат"),
-          ("goal", "шкала одна в обоих режимах: переключите и посмотрите, как сдвинутся точки"))
+    howto(("dot", "точка: средний результат по учебнику"), 
+          ("goal", "длинная полоска означает, что оценка менее точная"))
+    with st.expander("Почему у результата есть диапазон?"):
+        st.markdown("Диапазон — это 95% интервал неопределённости. Он показывает, насколько точна оценка среднего результата. Если диапазоны сильно перекрываются, нельзя уверенно утверждать, что один учебник лучше другого. Переключатель выше сравнивает обычное среднее и результат с поправками на состав учеников.")
 
     if adj:
         st.markdown(f'<div class="verdict">С поправкой на прошлый балл, тип местности и язык обучения '
@@ -935,6 +959,7 @@ elif page == "Часы":
                           xaxis=dict(range=[-m_, m_], title="изменение, часов", dtick=1, zeroline=False),
                           yaxis=dict(categoryorder="array", categoryarray=list(ch["topic_name"])[::-1],
                                      tickfont=dict(size=13)))
+        st.caption("Полоса вправо — теме добавляют часы. Полоса влево — часы снимают. Сумма часов по всему плану остаётся прежней.")
         chart(fig, 52 * len(ch) + 80)
     else:
         st.markdown('<div class="verdict">При текущей цели перераспределять часы не нужно.</div>',
