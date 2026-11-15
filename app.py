@@ -135,11 +135,7 @@ h2 {{font-weight: 900 !important; font-size: 2.1rem !important; color:#1F2430 !i
 /* общий стиль страниц: карточки вместо линий */
 [data-testid="stPlotlyChart"] {{background:#FFFFFF; border-radius:22px; padding:0; overflow:hidden;
   box-shadow:0 10px 30px rgba(31,36,48,.07); margin-bottom:.6rem;}}
-[data-testid="stTable"], [data-testid="stDataFrame"] {{background:#FFFFFF; border-radius:18px; overflow:hidden;
-  box-shadow:0 8px 24px rgba(31,36,48,.06);}}
-[data-testid="stTable"] table {{border:0 !important;}}
-[data-testid="stTable"] th {{background:#F4F1EA !important; font-weight:800 !important; color:#1F2430 !important; border:0 !important;}}
-[data-testid="stTable"] td {{border:0 !important; border-top:1px solid #F0ECE3 !important;}}
+/* Таблицы оформлены ниже в едином pastel UI стиле. */
 div[data-baseweb="select"] > div {{background:#FFFFFF !important; border-radius:14px !important; border:1px solid #E7E2D7 !important;}}
 [data-testid="stExpander"] details {{background:#FFFFFF; border-radius:16px !important; border:1px solid #E7E2D7 !important;}}
 button[data-variant="segmented_control"] {{border-radius:999px !important; margin-right:.35rem; font-weight:700 !important; padding:.35rem 1rem !important;}}
@@ -317,11 +313,65 @@ section[data-testid="stSidebar"] [data-testid="stCaptionContainer"] p {{ color: 
 }}
 [data-testid="stPlotlyChart"] .modebar {{ opacity: .35; }}
 [data-testid="stPlotlyChart"] .modebar:hover {{ opacity: 1; }}
+/* Дружелюбные таблицы: карточка, пастельная шапка и ясные разделители */
+[data-testid="stTable"], [data-testid="stDataFrame"] {{
+  border: 2px solid #FFFFFF !important;
+  border-radius: 22px !important;
+  overflow: hidden !important;
+  background: #FFFFFF !important;
+  box-shadow: 0 12px 28px rgba(67,86,145,.09), 0 3px 0 rgba(85,120,232,.05) !important;
+  margin: .45rem 0 1rem;
+}}
+[data-testid="stTable"] {{
+  padding: .35rem .55rem !important;
+}}
+[data-testid="stTable"] table {{
+  border-collapse: separate !important;
+  border-spacing: 0 !important;
+  border: 0 !important;
+  width: 100% !important;
+}}
+[data-testid="stTable"] thead th {{
+  background: #EEF2FF !important;
+  color: #5578E8 !important;
+  font-weight: 900 !important;
+  font-size: .88rem !important;
+  letter-spacing: .01em;
+  border: 0 !important;
+  border-bottom: 2px solid #E3E9FF !important;
+  padding: .85rem .9rem !important;
+}}
+[data-testid="stTable"] tbody td {{
+  color: #29334A !important;
+  border: 0 !important;
+  border-bottom: 1px solid #EDF0F7 !important;
+  padding: .78rem .9rem !important;
+  font-size: .91rem !important;
+  font-weight: 600;
+  transition: background .15s ease;
+}}
+[data-testid="stTable"] tbody tr:nth-child(even) td {{
+  background: #F8F9FE !important;
+}}
+[data-testid="stTable"] tbody tr:hover td {{
+  background: #EEF4FF !important;
+}}
+[data-testid="stTable"] tbody tr:last-child td {{
+  border-bottom: 0 !important;
+}}
+/* Streamlit DataFrame: сохраняем читаемость и скруглённую оболочку */
 [data-testid="stDataFrame"] {{
-  border: 1px solid var(--dl-border);
-  border-radius: 12px;
-  overflow: hidden;
-  background: #FFFFFF;
+  border-radius: 22px !important;
+  border: 2px solid #FFFFFF !important;
+}}
+[data-testid="stDataFrame"] [role="columnheader"] {{
+  background: #EEF2FF !important;
+  color: #5578E8 !important;
+  font-weight: 800 !important;
+}}
+[data-testid="stDataFrame"] [role="gridcell"] {{
+  color: #29334A !important;
+  font-weight: 600 !important;
 }}
 [data-testid="stWidgetLabel"] p {{ color: #46536A !important; font-weight: 800 !important; }}
 .stButton > button, .stDownloadButton > button {{
