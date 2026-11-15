@@ -91,7 +91,7 @@ h5 {{font-size: 1rem !important; color: {GRAPHITE} !important; margin-top: .6rem
 .hero {{padding: 1.2rem 0 1.4rem 0; margin-bottom: 1rem;}}
 .hero .eyebrow {{display:inline-block; font-weight:800; font-size:.85rem; letter-spacing:.06em; text-transform:uppercase;
   color:{INK}; background:#E6ECF8; border-radius:999px; padding:.35rem .9rem; margin-bottom:1.1rem;}}
-.hero h1 {{font-size: clamp(2.2rem, 5.6vw, 4.2rem) !important; font-weight: 900 !important; line-height: 1.04 !important;
+.hero h1 {{font-size: clamp(2.2rem, 4.6vw, 3.6rem) !important; font-weight: 900 !important; line-height: 1.04 !important;
   color:#1F2430 !important; margin: 0 0 1rem 0; padding: 0; max-width: 19ch; letter-spacing:-.02em;}}
 .hero h1 .acc {{color:{INK};}}
 .hero .sub {{font-size: 1.2rem; font-weight:600; color: #4A5260; max-width: 52ch; margin: 0 0 1.8rem 0; line-height: 1.5;}}
@@ -159,6 +159,59 @@ h4 {{font-weight:800 !important; color:#1F2430 !important;}}
 .st-key-weaklist [data-testid="stHorizontalBlock"]:last-child {{border-bottom:0;}}
 .side-note {{background:#F6F3EC; border-radius:14px; padding:.7rem .9rem;}}
 .synth {{border:0 !important; background:#FDECEC; border-radius:999px; padding:3px 10px; font-weight:700;}}
+
+/* лендинг */
+.hero .eyebrow i {{display:inline-block; width:.5rem; height:.5rem; border-radius:50%; background:#E0A800; margin-right:.5rem; vertical-align:middle;}}
+.hero .eyebrow {{background:#FFFFFF !important; box-shadow:0 2px 10px rgba(31,36,48,.06); text-transform:none !important; letter-spacing:0 !important; font-size:.9rem !important;}}
+.hero h1 mark {{background: linear-gradient(transparent 62%, #FFD866 62%, #FFD866 92%, transparent 92%); color:{INK}; padding:0 .05em;}}
+.trust {{font-size:.88rem; font-weight:700; color:{PENCIL}; margin-top:.6rem;}}
+.visual {{position:relative; padding:1.6rem 0 2.4rem 0;}}
+.shotcard {{background:linear-gradient(145deg,#E6ECF8,#F6EFD9); border-radius:28px; padding:1.1rem; box-shadow:0 18px 50px rgba(31,36,48,.12);}}
+.shotcard img {{width:100%; border-radius:18px; display:block;}}
+.chip {{position:absolute; background:#FFFFFF; border-radius:16px; padding:.7rem 1rem; box-shadow:0 12px 30px rgba(31,36,48,.14);
+  font-size:.92rem; color:#1F2430; display:flex; gap:.6rem; align-items:center;}}
+.chip.c1 {{top:.4rem; left:-1.2rem;}}
+.chip.c2 {{bottom:.6rem; right:-.6rem; display:block;}}
+.chip .cl {{font-size:.75rem; font-weight:800; color:{RED}; text-transform:uppercase; letter-spacing:.04em; margin-bottom:.15rem;}}
+.chip .dot {{width:.7rem; height:.7rem; border-radius:50%; background:{RED}; flex:none;}}
+.sec {{margin:3.2rem 0 0 0;}}
+.sec .kicker {{font-weight:800; font-size:.85rem; color:{INK}; text-transform:uppercase; letter-spacing:.08em;}}
+.sec .h, .closer .h {{font-size:clamp(1.7rem,3.4vw,2.5rem) !important; font-weight:900 !important; line-height:1.12 !important; color:#1F2430 !important; margin:.4rem 0 1.4rem 0 !important; max-width:24ch;}}
+.bignums {{display:grid; grid-template-columns:repeat(3,1fr); gap:0; border-top:1px solid #E7E2D7;}}
+.bn {{padding:1.4rem 1.4rem 1.2rem 0;}}
+.bn + .bn {{border-left:1px solid #E7E2D7; padding-left:1.4rem;}}
+.bn .v {{font-size:clamp(2.6rem,5vw,3.8rem); font-weight:900; color:{INK}; line-height:1;}}
+.bn .v.red {{color:{RED};}}
+.bn .l {{font-weight:700; color:#3F4757; margin-top:.6rem; line-height:1.45;}}
+.bn .s {{font-size:.8rem; color:{PENCIL}; margin-top:.6rem; text-decoration:underline; text-decoration-color:#D9D3C6;}}
+.callout {{background:#FFF3D6; border-radius:18px; padding:1.1rem 1.4rem; font-weight:800; color:#1F2430; margin-top:1.2rem; font-size:1.05rem;}}
+.sec.dark {{background:#16223F; border-radius:28px; padding:2.2rem 2rem 2.4rem 2rem;}}
+.sec.dark .kicker {{color:#FFD866;}}
+.sec.dark .h {{color:#FFFFFF !important;}}
+.steps {{display:grid; grid-template-columns:repeat(4,1fr); gap:1rem;}}
+.steps .st {{background:rgba(255,255,255,.07); border-radius:20px; padding:1.2rem;}}
+.steps .n {{width:2.3rem; height:2.3rem; border-radius:50%; background:#FFD866; color:#16223F; font-weight:900; display:flex; align-items:center; justify-content:center; margin-bottom:.8rem;}}
+.steps .t {{font-weight:900; color:#FFFFFF; font-size:1.1rem; margin-bottom:.35rem;}}
+.steps .d {{color:#C4CCE0; font-size:.95rem; line-height:1.5;}}
+.plans {{display:grid; grid-template-columns:repeat(3,1fr); gap:1rem; align-items:stretch;}}
+.pl {{background:#FFFFFF; border-radius:22px; padding:1.5rem; box-shadow:0 8px 24px rgba(31,36,48,.07); border:2px solid transparent;}}
+.pl.main {{border-color:{INK}; box-shadow:0 14px 36px rgba(29,58,138,.16);}}
+.pl .who {{font-weight:800; color:{PENCIL};}}
+.pl .pr {{font-size:2rem; font-weight:900; color:#1F2430; margin:.4rem 0 .6rem 0;}}
+.pl .pr span {{font-size:1rem; color:{PENCIL}; font-weight:700; margin-left:.2rem;}}
+.pl .d {{color:#4A5260; line-height:1.5;}}
+.faq details {{background:#FFFFFF; border-radius:16px; padding:1rem 1.3rem; margin-bottom:.6rem; box-shadow:0 4px 14px rgba(31,36,48,.05);}}
+.faq summary {{font-weight:800; color:#1F2430; cursor:pointer; font-size:1.05rem;}}
+.faq details p {{margin:.6rem 0 0 0; color:#4A5260;}}
+.closer {{background:#E6ECF8; border-radius:28px; padding:2rem; margin:3.2rem 0 1rem 0; text-align:center;}}
+.closer .h {{margin:0 auto .5rem auto !important;}}
+.closer p {{margin:0 auto; color:#4A5260; font-weight:600;}}
+.block-container {{max-width: 1200px !important;}}
+@media (max-width: 800px) {{
+  .bignums, .steps, .plans {{grid-template-columns:1fr;}}
+  .bn + .bn {{border-left:0; border-top:1px solid #E7E2D7; padding-left:0;}}
+  .chip.c1 {{left:.4rem;}} .chip.c2 {{right:.4rem;}}
+}}
 @media (prefers-reduced-motion: reduce) {{ * {{transition: none !important; animation: none !important;}} }}
 </style>
 """, unsafe_allow_html=True)
@@ -256,69 +309,116 @@ if page == "Главная":
     n_txt = f"{len(demo['meta']):,}".replace(",", " ")
     _, qt = tagger_quality()
     q_ok, q_n = int(qt["ok"].sum()), len(qt)
-    st.markdown(f"""
+    n_weak = len(demo["weak"])
+    tb_diag = next((d for d in demo["diagnoses"] if d["cause"] == "textbook"), None)
+    tb_name = load_demo()[2].set_index("topic_code")["topic_name"].get(tb_diag["topic_code"], "") if tb_diag else ""
+
+    left, right = st.columns([1.08, 0.92], gap="large")
+    with left:
+        st.markdown("""
 <div class="hero">
-  <span class="eyebrow">Аналитика для методистов и школ</span>
-  <h1>Учебник выбирают <span class="acc">доказательства</span>, а не мнения</h1>
-  <p class="sub">«Дәлел» берёт результаты теста и за минуту показывает, какие темы провалены, почему
+  <span class="eyebrow"><i></i>Для методистов, школ и отделов образования</span>
+  <h1>Учебник выбирают <mark>доказательства</mark>, а не мнения</h1>
+  <p class="sub">«Дәлел» берёт результаты теста и показывает, какие темы провалены, почему
   и что изменить: учебник, часы или работу со школами.</p>
-  <div class="stats">
-    <div class="stat"><div class="v">{n_txt}</div><div class="l">учеников в демо</div></div>
-    <div class="stat"><div class="v">{demo['meta']['school_id'].nunique()}</div><div class="l">школ</div></div>
-    <div class="stat"><div class="v red">{len(demo['weak'])}</div><div class="l">темы ниже цели 60%</div></div>
-    <div class="stat"><div class="v">{q_ok}/{q_n}</div><div class="l">заданий ИИ разметил верно</div></div>
+</div>""", unsafe_allow_html=True)
+        b1, b2 = st.columns([1, 1.25])
+        if b1.button("Открыть демо", type="primary", use_container_width=True):
+            st.session_state.data = load_demo()
+            st.session_state.synthetic = True
+            go_to("Обзор тем")
+        with b2.expander("Загрузить свои данные"):
+            st.markdown(
+                "- **results.csv**: student_id, school_id, textbook, lang, area, prior_score, item_id, correct (0/1)\n"
+                "- **items.csv**: item_id, item_text, topic_code\n"
+                "- **plan.csv**: topic_code, topic_name, hours, prereq_count\n\n"
+                "Имена учеников не нужны: используйте обезличенные ключи.")
+            fr = st.file_uploader("results.csv", type="csv", key="fr")
+            fi = st.file_uploader("items.csv", type="csv", key="fi")
+            fp = st.file_uploader("plan.csv", type="csv", key="fp")
+            if fr and fi and fp and st.button("Проверить и загрузить"):
+                r, i, pl = pd.read_csv(fr), pd.read_csv(fi), pd.read_csv(fp)
+                errs = core.validate(r, i, pl)
+                if errs:
+                    for e in errs:
+                        st.error(e)
+                else:
+                    st.session_state.data = (r, i, pl)
+                    st.session_state.synthetic = False
+                    go_to("Обзор тем")
+        st.markdown('<p class="trust">Работает без интернета и ключа API · казахский и русский</p>',
+                    unsafe_allow_html=True)
+    with right:
+        st.markdown(f"""
+<div class="visual">
+  <div class="shotcard"><img src="app/static/hero_overview.jpg" alt="Экран «Что провалено»: освоение тем с интервалами"></div>
+  <div class="chip c1"><span class="dot red"></span><div><b>{n_weak} темы</b> ниже цели 60%</div></div>
+  <div class="chip c2"><div class="cl">Причина найдена</div><div><b>Учебник</b> · {tb_name}</div></div>
+</div>""", unsafe_allow_html=True)
+
+    st.markdown(f"""
+<div class="sec">
+  <span class="kicker">Проблема</span>
+  <h2 class="h">Решения принимают на глаз, а результат никто не проверяет</h2>
+  <div class="bignums">
+    <div class="bn"><div class="v red">414</div><div class="l">баллов по математике в PISA-2025: на 12 меньше, чем в 2022. Среднее по ОЭСР 463</div><div class="s">ОЭСР, Forbes.kz</div></div>
+    <div class="bn"><div class="v">8 000+</div><div class="l">школ в Казахстане выбирают учебники и делят часы между темами</div><div class="s">Бюро национальной статистики</div></div>
+    <div class="bn"><div class="v">530</div><div class="l">школ в Жамбылской области: наш первый рынок</div><div class="s">baq-orda.kz, 28.08.2026</div></div>
   </div>
+  <div class="callout">Методист видит общий балл, но не видит, в какой теме пробел и виноват ли в нём учебник.</div>
+</div>
+
+<div class="sec">
+  <span class="kicker">Пример</span>
+  <h2 class="h">Средний балл обманывает</h2>
   <div class="flip">
     <div class="q">Какой учебник даёт лучший результат?</div>
     <div class="row"><span class="lbl">По средним баллам</span>
       <span class="ans wrong">{raw['textbook']}, {pct(raw['mean'])}</span>
-      <span class="pen">его чаще берут городские школы</span></div>
+      <span class="pen">его чаще берут сильные городские школы</span></div>
     <div class="row"><span class="lbl">С поправкой на состав школ</span>
       <span class="ans">{adj['textbook']}, {pct(adj['mean'])}</span>
       <span class="pen">а у «{raw['textbook']}» {pct(adj_of_raw)}</span></div>
-    <div class="src">Синтетические демо-данные: {n_txt} учеников, {demo['meta']['school_id'].nunique()} школ,
-    математика 6 класса.</div>
+    <div class="src">Синтетические демо-данные: {n_txt} учеников, {demo['meta']['school_id'].nunique()} школ, математика 6 класса.</div>
+  </div>
+</div>
+
+<div class="sec dark">
+  <span class="kicker">Как работает</span>
+  <h2 class="h">От результатов теста до решения методсовета</h2>
+  <div class="steps">
+    <div class="st"><div class="n">1</div><div class="t">Загрузите результаты</div><div class="d">Три таблицы CSV: ответы учеников, задания, учебный план. Без имён.</div></div>
+    <div class="st"><div class="n">2</div><div class="t">ИИ размечает задания</div><div class="d">Своя модель относит каждое задание к теме программы: {q_ok} из {q_n} верно на новых заданиях.</div></div>
+    <div class="st"><div class="n">3</div><div class="t">Система ищет причину</div><div class="d">Трудная тема, учебник, отдельные школы или плохое задание в тесте.</div></div>
+    <div class="st"><div class="n">4</div><div class="t">Готовое решение</div><div class="d">Честное сравнение учебников, новый план часов и записка на двух языках.</div></div>
+  </div>
+</div>
+
+<div class="sec">
+  <span class="kicker">Тарифы</span>
+  <h2 class="h">Каждый получает своё</h2>
+  <div class="plans">
+    <div class="pl"><div class="who">Учитель</div><div class="pr">15 000 ₸<span>/год</span></div><div class="d">Свои классы: какие темы провалены и что повторить.</div></div>
+    <div class="pl main"><div class="who">Школа</div><div class="pr">150 000 ₸<span>/год</span></div><div class="d">Все учителя, сравнение учебников, план часов, записка для методсовета.</div></div>
+    <div class="pl"><div class="who">Район или город</div><div class="pr">1 500 000 ₸<span>/год</span></div><div class="d">Все школы района, слабые школы и темы, решения по закупке учебников.</div></div>
+  </div>
+</div>
+
+<div class="sec">
+  <span class="kicker">Вопросы</span>
+  <h2 class="h">Частые вопросы</h2>
+  <div class="faq">
+    <details><summary>Нужен ли интернет или платный ИИ?</summary><p>Нет. Модель разметки обучена заранее и работает на месте, записка строится по шаблону. Ключ API можно подключить по желанию.</p></details>
+    <details><summary>Что с данными учеников?</summary><p>Имена не нужны: достаточно обезличенных ключей. Данные не уходят на сторонние сервисы.</p></details>
+    <details><summary>Цифры в демо настоящие?</summary><p>Нет, демо работает на синтетических данных, чтобы показать метод. Проверка на реальных результатах СОР — цель пилота.</p></details>
+    <details><summary>Чем это отличается от электронного журнала?</summary><p>Журнал хранит оценки. «Дәлел» разбирает результаты по темам и объясняет причину: учебник, тема, школа или задание.</p></details>
   </div>
 </div>
 """, unsafe_allow_html=True)
-    b1, b2 = st.columns([1, 2])
-    if b1.button("Открыть демо", type="primary", use_container_width=True):
-        st.session_state.data = load_demo()
-        st.session_state.synthetic = True
-        go_to("Обзор тем")
-    with b2.expander("Загрузить свои данные (3 файла CSV)"):
-        st.markdown(
-            "- **results.csv**: student_id, school_id, textbook, lang, area, prior_score, item_id, correct (0/1)\n"
-            "- **items.csv**: item_id, item_text, topic_code\n"
-            "- **plan.csv**: topic_code, topic_name, hours, prereq_count\n\n"
-            "Имена учеников не нужны: используйте обезличенные ключи.")
-        fr = st.file_uploader("results.csv", type="csv", key="fr")
-        fi = st.file_uploader("items.csv", type="csv", key="fi")
-        fp = st.file_uploader("plan.csv", type="csv", key="fp")
-        if fr and fi and fp and st.button("Проверить и загрузить"):
-            r, i, pl = pd.read_csv(fr), pd.read_csv(fi), pd.read_csv(fp)
-            errs = core.validate(r, i, pl)
-            if errs:
-                for e in errs:
-                    st.error(e)
-            else:
-                st.session_state.data = (r, i, pl)
-                st.session_state.synthetic = False
-                go_to("Обзор тем")
-    st.markdown("""
-<div class="ruled">
-  <div class="r"><div class="n">1</div><div class="t">Что провалено</div>
-    <div class="d">Освоение каждой темы с 95% интервалом. Можно сравнить город и село, казахский и русский язык обучения.</div></div>
-  <div class="r"><div class="n">2</div><div class="t">Почему</div>
-    <div class="d">Для каждой слабой темы система называет причину: трудна сама тема, подводит учебник,
-    отстают отдельные школы или в тесте плохое задание.</div></div>
-  <div class="r"><div class="n">3</div><div class="t">Что изменить</div>
-    <div class="d">Честное сравнение учебников, перераспределение часов при той же сумме и готовая записка
-    для методсовета на казахском и русском.</div></div>
-</div>
-<p class="note">Все числа считает проверяемый код. ИИ размечает задания по темам программы и пишет текст записки.</p>
-""", unsafe_allow_html=True)
+    st.markdown('<div class="closer"><h2 class="h">Попробуйте на демо-данных</h2><p>Нажмите «Открыть демо» вверху страницы или выберите раздел в меню слева.</p></div>',
+                unsafe_allow_html=True)
     st.stop()
+
 
 if st.session_state.data is None:
     st.info("Сначала откройте демо или загрузите данные на главной странице.")
