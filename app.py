@@ -431,7 +431,20 @@ with st.sidebar:
                 unsafe_allow_html=True)
     page = st.radio("Раздел", PAGES, key="page", label_visibility="collapsed")
     st.divider()
-    target = st.slider("Целевой уровень освоения темы", 0.50, 0.80, 0.60, 0.01, format="%.2f")
+    target = st.slider(
+        "Целевой уровень освоения темы", 0.50, 0.80, 0.60, 0.01,
+        format="%.2f",
+        help="Порог, с которым сравнивается доля верных ответов. Например, при 60% тема ниже цели, если ученики решают верно меньше 6 заданий из 10."
+    )
+    st.caption(f"Сейчас цель: {pct(target)} правильных ответов")
+    with st.expander("Словарь показателей"):
+        st.markdown(
+            "**Освоение темы** — доля ответов, на которые ученики ответили правильно.\n\n"
+            "**Целевой уровень** — желаемая доля правильных ответов.\n\n"
+            "**95% интервал** — диапазон возможного значения результата с учётом различий между школами. Это не оценка отдельного ученика.\n\n"
+            "**Поправка на состав школ** — сравнение учебников с учётом предыдущего уровня учеников, языка обучения и типа местности.\n\n"
+            "**Различающая способность** — насколько задание помогает отличить учеников, хорошо освоивших материал, от тех, кому нужна поддержка."
+        )
     if st.session_state.data is not None and st.session_state.synthetic:
         st.markdown('<span class="synth">Демо-данные синтетические</span>', unsafe_allow_html=True)
     p = llm.provider()
@@ -475,23 +488,75 @@ if page == "Главная":
             go_to("Обзор тем")
         with b2.expander("Загрузить свои данные"):
             st.markdown(
-                "- **results.csv**: student_id, school_id, textbook, lang, area, prior_score, item_id, correct (0/1)\n"
-                "- **items.csv**: item_id, item_text, topic_code\n"
-                "- **plan.csv**: topic_code, topic_name, hours, prereq_count\n\n"
-                "Имена учеников не нужны: используйте обезличенные ключи.")
-            fr = st.file_uploader("results.csv", type="csv", key="fr")
-            fi = st.file_uploader("items.csv", type="csv", key="fi")
-            fp = st.file_uploader("plan.csv", type="csv", key="fp")
-            if fr and fi and fp and st.button("Проверить и загрузить"):
-                r, i, pl = pd.read_csv(fr), pd.read_csv(fi), pd.read_csv(fp)
-                errs = core.validate(r, i, pl)
-                if errs:
-                    for e in errs:
-                        st.error(e)
-                else:
-                    st.session_state.data = (r, i, pl)
-                    st.session_state.synthetic = False
-                    go_to("Обзор тем")
+                "Загрузите три CSV-файла. Сначала подготовьте таблицы по шаблонам ниже. "
+                "Имена и другие персональные данные учеников не нужны — используйте обезличенный student_id."
+            )
+            st.markdown("**1. Результаты учеников — results.csv**")
+            st.caption("Одна строка = один ответ ученика на одно задание. correct: 1 — верно, 0 — неверно.")
+            st.download_button(
+                "Скачать шаблон results.csv",
+                "student_id,school_id,textbook,lang,area,prior_score,item_id,correct\nS001,School_01,Учебник А,ru,urban,0.65,Q001,1\n",
+                file_name="results_template.csv", mime="text/csv", key="tpl_results"
+            )
+            st.markdown("**2. Справочник заданий — items.csv**")
+            st.caption("Для каждого item_id укажите текст задания и код темы.")
+            st.download_button(
+                "Скачать шаблон items.csv",
+                "item_id,item_text,topic_code\nQ001,Пример задания,T01\n",
+                file_name="items_template.csv", mime="text/csv", key="tpl_items"
+            )
+            st.markdown("**3. Учебный план — plan.csv**")
+            st.caption("Укажите название каждой темы, количество часов и число предварительных тем.")
+            st.download_button(
+                "Скачать шаблон plan.csv",
+                "topic_code,topic_name,hours,prereq_count\nT01,Пример темы,4,0\n",
+                file_name="plan_template.csv", mime="text/csv", key="tpl_plan"
+            )
+            st.info("Для надёжных выводов нужно не менее 30 учеников в анализируемой группе. "
+                    "Шаблоны содержат только примерные строки — замените их своими обезличенными данными.")
+            fr = st.file_uploader("Файл результатов", type="csv", key="fr")
+            fi = st.file_uploader("Файл заданий", type="csv", key="fi")
+            fp = st.file_uploader("Файл учебного плана", type="csv", key="fp")
+            ready = all(x is not None for x in (fr, fi, fp))
+            if ready:
+                st.caption("Все три файла выбраны. Нажмите кнопку, чтобы проверить структуру и данные.")
+            if ready and st.button("Проверить данные и открыть анализ", type="primary"):
+                try:
+                    r, i, pl = pd.read_csv(fr), pd.read_csv(fi), pd.read_csv(fp)
+                    errs = core.validate(r, i, pl)
+                    for label, frame in (("results.csv", r), ("items.csv", i), ("plan.csv", pl)):
+                        if frame.empty:
+                            errs.append(f"Файл {label} пустой.")
+                    required = {
+                        "results.csv": (r, core.REQUIRED["results"]),
+                        "items.csv": (i, core.REQUIRED["items"]),
+                        "plan.csv": (pl, core.REQUIRED["plan"]),
+                    }
+                    for label, (frame, columns) in required.items():
+                        if all(col in frame.columns for col in columns):
+                            empty_cols = [col for col in columns if frame[col].isna().any()]
+                            if empty_cols:
+                                errs.append(f"В файле {label} есть пустые значения в столбцах: {', '.join(empty_cols)}.")
+                    if "prior_score" in r.columns and pd.to_numeric(r["prior_score"], errors="coerce").isna().any():
+                        errs.append("В results.csv столбец prior_score должен содержать только числа.")
+                    if "hours" in pl.columns and pd.to_numeric(pl["hours"], errors="coerce").isna().any():
+                        errs.append("В plan.csv столбец hours должен содержать только числа.")
+                    if errs:
+                        st.error("Проверка не пройдена. Исправьте пункты ниже и загрузите файлы снова:")
+                        for e in errs:
+                            st.write(f"• {e}")
+                    else:
+                        st.success(
+                            f"Проверка пройдена: {r['student_id'].nunique()} учеников, "
+                            f"{r['school_id'].nunique()} школ, {i['item_id'].nunique()} заданий, "
+                            f"{pl['topic_code'].nunique()} тем."
+                        )
+                        st.session_state.data = (r, i, pl)
+                        st.session_state.synthetic = False
+                        go_to("Обзор тем")
+                except Exception as e:
+                    st.error(f"Не удалось прочитать CSV. Проверьте, что файлы сохранены в формате CSV UTF-8. "
+                             f"Подробность: {type(e).__name__}: {e}")
         st.markdown('<p class="trust">Работает без интернета и ключа API · казахский и русский</p>',
                     unsafe_allow_html=True)
     with right:
@@ -590,8 +655,8 @@ diag = {d["topic_code"]: d for d in A["diagnoses"]}
 # ---------- обзор тем ----------
 
 if page == "Обзор тем":
-    st.markdown("## Что провалено")
-    lead("Какие темы ученики знают хуже, чем нужно, и можно ли этому верить.")
+    st.markdown("## Где нужно усилить обучение")
+    lead("Сначала смотрите на темы ниже целевого уровня. Нажмите «Открыть», чтобы увидеть возможную причину, данные и рекомендуемое действие.")
     worst = A["mastery"].sort_values("mastery").iloc[0]
     takeaway(f"<b>{len(A['weak'])} из {len(plan)}</b> тем ниже цели {pct(target)}. Слабее всего «{names[worst['topic_code']]}»: "
              f"задания по ней решают верно только <b>{pct(worst['mastery'])}</b> учеников, то есть примерно "
@@ -641,8 +706,16 @@ if page == "Обзор тем":
                       yaxis=dict(categoryorder="array", categoryarray=list(m["topic_name"])[::-1],
                                  showgrid=False, tickfont=dict(size=13)))
     chart(fig, 44 * len(m) + 70)
-    howto(("dot", "точка: какая доля заданий по теме решена верно; полоска: где почти наверняка лежит настоящий результат. Чем короче полоска, тем точнее"),
-          ("red", "красные темы ниже цели"), ("goal", f"пунктир: цель {pct(target)}"))
+    howto(("dot", "точка: доля правильных ответов по теме"),
+          ("red", "красные темы ниже цели"), ("goal", f"пунктир: целевой уровень {pct(target)}"))
+    with st.expander("Как понимать график и 95% интервал"):
+        st.markdown(
+            "- **Точка** показывает наблюдаемую долю правильных ответов по теме.\n"
+            "- **Горизонтальная линия** показывает 95% интервал неопределённости: диапазон возможных значений с учётом того, что ученики сгруппированы по школам.\n"
+            "- **Чем короче линия**, тем точнее оценка. Длинная линия означает, что данных для точного вывода меньше.\n"
+            "- **Красный пунктир** — выбранная цель. Если точка левее линии, тема ниже целевого уровня.\n\n"
+            "Интервал не означает, что 95% учеников набрали такой результат; он описывает неопределённость общей оценки."
+        )
     st.markdown(f'<div class="note">В расчёте {len(sub_meta)} учеников, {sub_meta["school_id"].nunique()} школ.</div>',
                 unsafe_allow_html=True)
 
