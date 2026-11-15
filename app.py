@@ -33,7 +33,7 @@ pio.templates["dalel"] = go.layout.Template(layout=go.Layout(
     xaxis=dict(gridcolor=GRID, zerolinecolor=GRID, linecolor=GRID, tickfont=dict(color=PENCIL)),
     yaxis=dict(gridcolor=GRID, zerolinecolor=GRID, linecolor=GRID, tickfont=dict(color=GRAPHITE)),
     hoverlabel=dict(font=dict(family="Nunito, sans-serif")),
-    colorway=[INK, PENCIL, "#B8C2D6"],
+    colorway=[INK, MINT, LILAC, SUN, RED, PENCIL],
 ))
 pio.templates.default = "plotly_white+dalel"
 
