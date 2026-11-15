@@ -25,7 +25,7 @@ ACCENT, GREY = INK, PENCIL
 FONTS_CSS = (Path(__file__).parent / "static" / "fonts.css").read_text(encoding="utf-8")
 
 pio.templates["dalel"] = go.layout.Template(layout=go.Layout(
-    font=dict(family="Nunito, sans-serif", color=GRAPHITE, size=13),
+    font=dict(family="Nunito, sans-serif", color=GRAPHITE, size=14),
     paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)",
     xaxis=dict(gridcolor=GRID, zerolinecolor=GRID, linecolor=GRID, tickfont=dict(color=PENCIL)),
     yaxis=dict(gridcolor=GRID, zerolinecolor=GRID, linecolor=GRID, tickfont=dict(color=GRAPHITE)),
@@ -128,6 +128,37 @@ h2 {{font-weight: 900 !important; font-size: 2.1rem !important; color:#1F2430 !i
   .flip .lbl {{width: auto;}}
   .ruled {{grid-template-columns: 1fr;}}
 }}
+
+/* общий стиль страниц: карточки вместо линий */
+[data-testid="stPlotlyChart"] {{background:#FFFFFF; border-radius:22px; padding:0; overflow:hidden;
+  box-shadow:0 10px 30px rgba(31,36,48,.07); margin-bottom:.6rem;}}
+[data-testid="stTable"], [data-testid="stDataFrame"] {{background:#FFFFFF; border-radius:18px; overflow:hidden;
+  box-shadow:0 8px 24px rgba(31,36,48,.06);}}
+[data-testid="stTable"] table {{border:0 !important;}}
+[data-testid="stTable"] th {{background:#F4F1EA !important; font-weight:800 !important; color:#1F2430 !important; border:0 !important;}}
+[data-testid="stTable"] td {{border:0 !important; border-top:1px solid #F0ECE3 !important;}}
+div[data-baseweb="select"] > div {{background:#FFFFFF !important; border-radius:14px !important; border:1px solid #E7E2D7 !important;}}
+[data-testid="stExpander"] details {{background:#FFFFFF; border-radius:16px !important; border:1px solid #E7E2D7 !important;}}
+button[data-variant="segmented_control"] {{border-radius:999px !important; margin-right:.35rem; font-weight:700 !important; padding:.35rem 1rem !important;}}
+button[data-variant="segmented_control"][aria-checked="true"] {{background:{INK} !important; color:#FFFFFF !important; border-color:{INK} !important;}}
+button[data-variant="segmented_control"][aria-checked="true"] p {{color:#FFFFFF !important;}}
+.stButton button {{border-radius:999px !important; font-weight:700 !important;}}
+.stDownloadButton button {{border-radius:999px !important; font-weight:800 !important;}}
+h3 {{font-weight:900 !important; color:#1F2430 !important; font-size:1.45rem !important; margin-top:1.2rem !important;}}
+h4 {{font-weight:800 !important; color:#1F2430 !important;}}
+.lead {{font-size:1.12rem !important; font-weight:600; color:#5F6878 !important;}}
+.diag, .verdict {{border-left:0 !important; border-radius:18px; background:#FFFFFF !important;
+  box-shadow:0 8px 24px rgba(31,36,48,.07); padding:1.1rem 1.3rem !important; position:relative;}}
+.diag::before, .verdict::before {{content:""; position:absolute; left:0; top:14px; bottom:14px; width:5px; border-radius:0 4px 4px 0; background:{RED};}}
+.verdict:not(.wrong)::before {{background:{INK};}}
+.cause {{border-radius:999px !important; padding:3px 12px !important; background:#FDECEC !important; border:0 !important;}}
+[data-testid="stAlert"] {{border-radius:16px !important;}}
+[data-testid="stMetric"] {{background:#FFFFFF; border-radius:18px; padding:.9rem 1.1rem; box-shadow:0 8px 24px rgba(31,36,48,.07);}}
+.st-key-weaklist {{background:#FFFFFF; border-radius:20px; border-top:0 !important; padding:.4rem 1.1rem;
+  box-shadow:0 8px 24px rgba(31,36,48,.07);}}
+.st-key-weaklist [data-testid="stHorizontalBlock"]:last-child {{border-bottom:0;}}
+.side-note {{background:#F6F3EC; border-radius:14px; padding:.7rem .9rem;}}
+.synth {{border:0 !important; background:#FDECEC; border-radius:999px; padding:3px 10px; font-weight:700;}}
 @media (prefers-reduced-motion: reduce) {{ * {{transition: none !important; animation: none !important;}} }}
 </style>
 """, unsafe_allow_html=True)
@@ -173,7 +204,7 @@ def tb_color(tb, all_tbs):
 
 
 def chart(fig, height):
-    fig.update_layout(height=height)
+    fig.update_layout(height=height, plot_bgcolor="#FFFFFF", paper_bgcolor="#FFFFFF")
     st.plotly_chart(fig, use_container_width=True, config=PLOT_CFG)
 
 
