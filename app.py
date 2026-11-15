@@ -236,6 +236,116 @@ h4 {{font-weight:800 !important; color:#1F2430 !important;}}
 .pc.ok .pb {{background:#E6ECF8; color:{INK};}}
 @media (max-width: 800px) {{ .pairs {{grid-template-columns:1fr;}} .take {{flex-direction:column; gap:.5rem;}} }}
 @media (prefers-reduced-motion: reduce) {{ * {{transition: none !important; animation: none !important;}} }}
+
+/* ===== DALEL PRODUCT UI/UX POLISH ===== */
+:root {{
+  --dl-bg: #F4F6FB;
+  --dl-surface: #FFFFFF;
+  --dl-ink: #243B80;
+  --dl-text: #202A3B;
+  --dl-muted: #77839A;
+  --dl-border: #E5EAF3;
+  --dl-shadow: 0 12px 32px rgba(28, 39, 71, .07);
+}}
+.stApp {{ background: var(--dl-bg); color: var(--dl-text); }}
+[data-testid="stHeader"] {{ background: rgba(244,246,251,.9); }}
+.block-container {{ max-width: 1360px !important; padding: 2rem 2.4rem 3.5rem !important; }}
+h1, h2, h3, h4 {{ color: var(--dl-text) !important; letter-spacing: -.035em !important; }}
+h1 {{ font-weight: 900 !important; letter-spacing: -.05em !important; }}
+h2 {{ font-size: clamp(1.55rem, 2.4vw, 2rem) !important; font-weight: 850 !important; }}
+h3 {{ font-weight: 800 !important; }}
+p, li {{ line-height: 1.65; }}
+section[data-testid="stSidebar"] {{
+  background: #17233F !important;
+  border-right: 1px solid rgba(255,255,255,.08);
+}}
+section[data-testid="stSidebar"] > div {{ background: transparent !important; }}
+section[data-testid="stSidebar"] .brand {{ color: #FFFFFF !important; font-size: 1.8rem; font-weight: 900; letter-spacing: -.04em; }}
+section[data-testid="stSidebar"] .brand-sub {{ color: #B8C4DC !important; }}
+section[data-testid="stSidebar"] p,
+section[data-testid="stSidebar"] label,
+section[data-testid="stSidebar"] [data-testid="stMarkdownContainer"] {{ color: #E5EBF7; }}
+section[data-testid="stSidebar"] div[role="radiogroup"] {{ gap: .3rem !important; }}
+section[data-testid="stSidebar"] label[data-testid="stRadioOption"] {{
+  border: 1px solid transparent !important;
+  border-radius: 10px !important;
+  margin: 2px 0 !important;
+  padding: .55rem .75rem !important;
+  transition: background .16s ease, border-color .16s ease;
+}}
+section[data-testid="stSidebar"] label[data-testid="stRadioOption"][data-selected="true"] {{
+  background: rgba(112,139,255,.18) !important;
+  border-color: rgba(160,178,255,.22) !important;
+}}
+section[data-testid="stSidebar"] label[data-testid="stRadioOption"][data-selected="true"] p {{
+  color: #FFFFFF !important; font-weight: 850 !important;
+}}
+section[data-testid="stSidebar"] label[data-testid="stRadioOption"]:hover {{
+  background: rgba(255,255,255,.08) !important;
+}}
+section[data-testid="stSidebar"] [data-testid="stCaptionContainer"] p {{ color: #AEBBD4 !important; }}
+.kpi {{
+  background: var(--dl-surface);
+  border: 1px solid var(--dl-border);
+  border-left: 3px solid var(--dl-ink);
+  border-radius: 14px;
+  padding: 1rem 1.1rem !important;
+  box-shadow: 0 5px 18px rgba(28,39,71,.035);
+}}
+.kpi .v {{ font-size: clamp(1.55rem, 2.2vw, 2rem) !important; font-weight: 900 !important; }}
+.kpi .l {{ color: var(--dl-muted) !important; font-weight: 700; }}
+.lead {{ color: #66738B !important; font-size: 1.02rem; max-width: 78ch; }}
+.take, .verdict, .diag {{
+  border-radius: 14px !important;
+  box-shadow: 0 5px 18px rgba(28,39,71,.035);
+}}
+[data-testid="stPlotlyChart"] {{
+  background: #FFFFFF;
+  border: 1px solid var(--dl-border);
+  border-radius: 16px;
+  padding: .55rem;
+  box-shadow: 0 5px 18px rgba(28,39,71,.035);
+}}
+[data-testid="stDataFrame"] {{
+  border: 1px solid var(--dl-border);
+  border-radius: 12px;
+  overflow: hidden;
+  background: #FFFFFF;
+}}
+[data-testid="stWidgetLabel"] p {{ color: #46536A !important; font-weight: 800 !important; }}
+.stButton > button, .stDownloadButton > button {{
+  border-radius: 10px !important;
+  min-height: 2.65rem;
+  font-weight: 800 !important;
+  transition: transform .16s ease, box-shadow .16s ease, background .16s ease;
+}}
+.stButton > button:hover, .stDownloadButton > button:hover {{
+  transform: translateY(-1px);
+  box-shadow: 0 7px 18px rgba(36,59,128,.13);
+}}
+input, textarea, [data-baseweb="select"] > div {{
+  border-radius: 10px !important;
+}}
+[data-testid="stAlert"] {{ border-radius: 12px !important; }}
+[data-testid="stExpander"] {{
+  border: 1px solid var(--dl-border) !important;
+  border-radius: 12px !important;
+  background: #FFFFFF;
+}}
+.stCaption, [data-testid="stCaptionContainer"] {{ color: var(--dl-muted) !important; }}
+button:focus-visible, input:focus-visible, textarea:focus-visible {{
+  outline: 3px solid rgba(64,87,214,.32) !important;
+  outline-offset: 2px !important;
+}}
+@media (max-width: 900px) {{
+  .block-container {{ padding: 1.25rem 1rem 2.5rem !important; }}
+  .kpi {{ padding: .8rem !important; }}
+}}
+@media (max-width: 600px) {{
+  h1 {{ font-size: 1.8rem !important; }}
+  h2 {{ font-size: 1.45rem !important; }}
+}}
+
 </style>
 """, unsafe_allow_html=True)
 
