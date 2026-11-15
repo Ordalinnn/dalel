@@ -426,7 +426,7 @@ if page == "Главная":
     <div class="st"><div class="n">1</div><div class="t">Загрузите результаты</div><div class="d">Три таблицы CSV: ответы учеников, задания, учебный план. Без имён.</div></div>
     <div class="st"><div class="n">2</div><div class="t">ИИ размечает задания</div><div class="d">Своя модель относит каждое задание к теме программы: {q_ok} из {q_n} верно на новых заданиях.</div></div>
     <div class="st"><div class="n">3</div><div class="t">Система ищет причину</div><div class="d">Трудная тема, учебник, отдельные школы или плохое задание в тесте.</div></div>
-    <div class="st"><div class="n">4</div><div class="t">Готовое решение</div><div class="d">Честное сравнение учебников, новый план часов и записка на двух языках.</div></div>
+    <div class="st"><div class="n">4</div><div class="t">Готовое решение</div><div class="d">Сравнение учебников с поправкой на состав школ, новый план часов и записка на двух языках.</div></div>
   </div>
 </div>
 
@@ -445,7 +445,7 @@ if page == "Главная":
   <h2 class="h">Частые вопросы</h2>
   <div class="faq">
     <details><summary>Нужен ли интернет или платный ИИ?</summary><p>Нет. Модель разметки обучена заранее и работает на месте, записка строится по шаблону. Ключ API можно подключить по желанию.</p></details>
-    <details><summary>Что с данными учеников?</summary><p>Имена не нужны: достаточно обезличенных ключей. Данные не уходят на сторонние сервисы.</p></details>
+    <details><summary>Что с данными учеников?</summary><p>Имена не нужны: достаточно обезличенных ключей. Без ключа API расчёт идёт только в приложении. Демо на этом сайте открытое, поэтому реальные данные учеников сюда загружать не нужно: для пилота приложение можно установить на сервер школы или управления образования.</p></details>
     <details><summary>Цифры в демо настоящие?</summary><p>Нет, демо работает на синтетических данных, чтобы показать метод. Проверка на реальных результатах СОР — цель пилота.</p></details>
     <details><summary>Чем это отличается от электронного журнала?</summary><p>Журнал хранит оценки. «Дәлел» разбирает результаты по темам и объясняет причину: учебник, тема, школа или задание.</p></details>
   </div>
@@ -465,7 +465,13 @@ if st.session_state.data is None:
     st.stop()
 
 results, items, plan = st.session_state.data
-A = run_analysis(results, items, plan, target)
+try:
+    A = run_analysis(results, items, plan, target)
+except Exception:
+    st.error("Не получилось посчитать эти данные. Проверьте, что дроби записаны через точку, "
+             "нет пустых ячеек в prior_score и hours, а файл сохранён с разделителем «,». "
+             "Демо-данные открываются на главной странице.")
+    st.stop()
 meta = A["meta"]
 names = plan.set_index("topic_code")["topic_name"].to_dict()
 diag = {d["topic_code"]: d for d in A["diagnoses"]}
@@ -531,6 +537,9 @@ if page == "Обзор тем":
                 unsafe_allow_html=True)
 
     st.markdown("#### Темы ниже цели")
+    if area != "все" or lang != "все":
+        st.markdown('<div class="note">Список и причины посчитаны по всем ученикам, фильтр меняет только график выше.</div>',
+                    unsafe_allow_html=True)
     weak_box = st.container(key="weaklist")
     for d in A["diagnoses"]:
         cc = weak_box.columns([3, 2, 1], vertical_alignment="center")
@@ -828,7 +837,7 @@ elif page == "ИИ-разметка":
 
 elif page == "Записка":
     st.markdown("## Записка для методического совета")
-    lead("Текст собирается только из рассчитанных чисел, а каждое число в нём сверяется с расчётом.")
+    lead("Текст собирается только из рассчитанных чисел, а числа в нём автоматически сверяются с расчётом.")
     facts = core.build_facts(A)
     lang = st.radio("Язык", ["русский", "казахский"], horizontal=True)
     lcode = "ru" if lang == "русский" else "kk"
@@ -843,7 +852,11 @@ elif page == "Записка":
         if memo is None:
             memo = llm.template_memo(facts, lcode)
         st.session_state.memo = (memo, source, lcode)
+        st.session_state.memo_target = target
 
+    if "memo" in st.session_state and st.session_state.get("memo_target") != target:
+        del st.session_state["memo"]
+        st.info("Цель изменилась. Соберите записку заново.")
     if "memo" in st.session_state:
         memo, source, lc = st.session_state.memo
         st.markdown(memo.replace("\n", "  \n"))
