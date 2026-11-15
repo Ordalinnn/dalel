@@ -25,11 +25,11 @@ ACCENT, GREY = INK, PENCIL
 FONTS_CSS = (Path(__file__).parent / "static" / "fonts.css").read_text(encoding="utf-8")
 
 pio.templates["dalel"] = go.layout.Template(layout=go.Layout(
-    font=dict(family="Golos Text, sans-serif", color=GRAPHITE, size=13),
+    font=dict(family="Nunito, sans-serif", color=GRAPHITE, size=13),
     paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)",
     xaxis=dict(gridcolor=GRID, zerolinecolor=GRID, linecolor=GRID, tickfont=dict(color=PENCIL)),
     yaxis=dict(gridcolor=GRID, zerolinecolor=GRID, linecolor=GRID, tickfont=dict(color=GRAPHITE)),
-    hoverlabel=dict(font=dict(family="Golos Text, sans-serif")),
+    hoverlabel=dict(font=dict(family="Nunito, sans-serif")),
     colorway=[INK, PENCIL, "#B8C2D6"],
 ))
 pio.templates.default = "plotly_white+dalel"
@@ -38,18 +38,18 @@ st.markdown(f"""
 <style>
 {FONTS_CSS}
 html, body, .stApp, .stMarkdown, p, li, label, input, textarea, button, [data-testid="stWidgetLabel"] {{
-  font-family: 'Golos Text', sans-serif;
+  font-family: 'Nunito', sans-serif;
 }}
 #MainMenu, footer {{visibility: hidden;}}
 .block-container {{padding-top: 2.2rem; max-width: 1120px;}}
-h1, h2, h3, h4 {{font-family: 'Unbounded', sans-serif !important; color: {INK}; letter-spacing: -0.01em;}}
+h1, h2, h3, h4 {{font-family: 'Nunito', sans-serif !important; color: {INK}; letter-spacing: -0.01em;}}
 h2 {{font-size: 1.7rem !important; font-weight: 700 !important; line-height: 1.2 !important;}}
 h3, h4, h5 {{font-weight: 500 !important;}}
 p, li {{max-width: 75ch; line-height: 1.6;}}
 
 /* боковая панель: поля тетради */
 section[data-testid="stSidebar"] {{background: #FFFFFF; border-right: 2px solid #F2C4C4;}}
-.brand {{font-family: 'Unbounded', sans-serif; font-weight: 700; font-size: 1.6rem; color: {INK}; margin: 0;}}
+.brand {{font-family: 'Nunito', sans-serif; font-weight: 700; font-size: 1.6rem; color: {INK}; margin: 0;}}
 .brand-sub {{color: {PENCIL}; font-size: .88rem; margin: .2rem 0 1.2rem 0; line-height: 1.4;}}
 section[data-testid="stSidebar"] div[role="radiogroup"] {{gap: 0;}}
 section[data-testid="stSidebar"] div[role="radiogroup"] label {{
@@ -65,7 +65,7 @@ section[data-testid="stSidebar"] label[data-testid="stRadioOption"]:has(input:fo
 
 /* показатели */
 .kpi {{border-left: 2px solid {GRID}; padding: .2rem 0 .2rem 1rem;}}
-.kpi .v {{font-family: 'Unbounded', sans-serif; font-size: 1.9rem; font-weight: 500; color: {INK}; line-height: 1.15;}}
+.kpi .v {{font-family: 'Nunito', sans-serif; font-size: 1.9rem; font-weight: 500; color: {INK}; line-height: 1.15;}}
 .kpi .l {{font-size: .88rem; color: {PENCIL}; margin-top: .2rem;}}
 
 .cause {{display:inline-block; padding: 2px 10px; border: 1.5px solid {RED}; border-radius: 4px;
@@ -87,38 +87,46 @@ h5 {{font-size: 1rem !important; color: {GRAPHITE} !important; margin-top: .6rem
 .synth {{font-size:.82rem; color:{RED}; border-bottom: 1.5px solid {RED};}}
 .side-note {{font-size: .82rem; color: {PENCIL}; line-height: 1.45;}}
 
-/* главная: лист в клетку */
-.hero {{
-  position: relative; padding: 2.4rem 2rem 2.2rem 3.2rem; margin-bottom: 1.6rem;
-  background-color: #FFFFFF;
-  background-image: linear-gradient({GRID} 1px, transparent 1px), linear-gradient(90deg, {GRID} 1px, transparent 1px);
-  background-size: 22px 22px; border: 1px solid {GRID};
-}}
-.hero::before {{content: ""; position: absolute; top: 0; bottom: 0; left: 2rem; width: 2px; background: #F2A6A6;}}
-.hero h1 {{font-size: clamp(1.7rem, 4vw, 2.9rem) !important; font-weight: 700 !important; line-height: 1.12 !important;
-          margin: 0 0 .7rem 0; padding: 0; max-width: 16ch;}}
-.hero .sub {{font-size: 1.12rem; color: {GRAPHITE}; max-width: 54ch; margin: 0 0 2rem 0; line-height: 1.55;}}
-.flip {{background: rgba(255,255,255,.92); display: inline-block; padding: 1.1rem 1.4rem 1.2rem 1.4rem;
-        border: 1px solid {GRID}; max-width: 100%;}}
-.flip .q {{font-weight: 600; color: {GRAPHITE}; margin-bottom: .9rem;}}
-.flip .row {{display: flex; align-items: baseline; gap: 1rem; flex-wrap: wrap; padding: .35rem 0;}}
-.flip .lbl {{width: 15rem; color: {PENCIL}; font-size: .95rem;}}
-.flip .ans {{font-family: 'Unbounded', sans-serif; font-size: 1.25rem; color: {INK};}}
-.flip .wrong {{text-decoration: line-through; text-decoration-color: {RED}; text-decoration-thickness: 2.5px; color: {PENCIL};}}
-.flip .pen {{font-family: 'Caveat', cursive; font-size: 1.45rem; color: {RED}; line-height: 1;}}
-.flip .src {{font-size: .82rem; color: {PENCIL}; margin-top: .7rem;}}
-
-/* три вопроса: строки тетради, не карточки */
-.ruled {{border-top: 1px solid {GRID}; margin: .4rem 0 1.4rem 0;}}
-.ruled .r {{display: grid; grid-template-columns: 13rem 1fr; gap: 1.2rem; padding: .9rem 0; border-bottom: 1px solid {GRID};}}
-.ruled .t {{font-family: 'Unbounded', sans-serif; font-weight: 500; color: {INK}; font-size: 1rem;}}
-.ruled .d {{color: {GRAPHITE}; max-width: 62ch;}}
+/* главная */
+.hero {{padding: 1.2rem 0 1.4rem 0; margin-bottom: 1rem;}}
+.hero .eyebrow {{display:inline-block; font-weight:800; font-size:.85rem; letter-spacing:.06em; text-transform:uppercase;
+  color:{INK}; background:#E6ECF8; border-radius:999px; padding:.35rem .9rem; margin-bottom:1.1rem;}}
+.hero h1 {{font-size: clamp(2.2rem, 5.6vw, 4.2rem) !important; font-weight: 900 !important; line-height: 1.04 !important;
+  color:#1F2430 !important; margin: 0 0 1rem 0; padding: 0; max-width: 19ch; letter-spacing:-.02em;}}
+.hero h1 .acc {{color:{INK};}}
+.hero .sub {{font-size: 1.2rem; font-weight:600; color: #4A5260; max-width: 52ch; margin: 0 0 1.8rem 0; line-height: 1.5;}}
+.stats {{display:grid; grid-template-columns: repeat(4, 1fr); gap: 1rem; margin: 0 0 1.8rem 0;}}
+.stat {{background:#FFFFFF; border-radius:20px; padding:1.1rem 1.2rem; box-shadow:0 8px 24px rgba(31,36,48,.07);}}
+.stat .v {{font-size: 2.1rem; font-weight: 900; color:{INK}; line-height:1.05;}}
+.stat .v.red {{color:{RED};}}
+.stat .l {{font-size:.9rem; font-weight:600; color:{PENCIL}; margin-top:.3rem; line-height:1.35;}}
+.flip {{background:#FFFFFF; border-radius:24px; padding: 1.5rem 1.7rem 1.4rem 1.7rem; box-shadow:0 14px 40px rgba(31,36,48,.10); max-width:100%;}}
+.flip .q {{font-weight: 900; font-size:1.25rem; color: #1F2430; margin-bottom: .9rem;}}
+.flip .row {{display: flex; align-items: baseline; gap: 1rem; flex-wrap: wrap; padding: .5rem 0; border-top:1px solid #EFEBE2;}}
+.flip .lbl {{width: 15rem; color: {PENCIL}; font-weight:600; font-size: .95rem;}}
+.flip .ans {{font-weight:900; font-size: 1.45rem; color: {INK};}}
+.flip .wrong {{text-decoration: line-through; text-decoration-color: {RED}; text-decoration-thickness: 3px; color: {PENCIL};}}
+.flip .pen {{font-family: 'Caveat', cursive; font-size: 1.5rem; color: {RED}; line-height: 1;}}
+.flip .src {{font-size: .82rem; color: {PENCIL}; margin-top: .8rem;}}
+.ruled {{display:grid; grid-template-columns: repeat(3, 1fr); gap:1rem; margin: 1.6rem 0 1.4rem 0;}}
+.ruled .r {{background:#FFFFFF; border-radius:20px; padding:1.3rem 1.3rem 1.4rem 1.3rem; box-shadow:0 8px 24px rgba(31,36,48,.07);}}
+.ruled .n {{display:inline-flex; width:2.2rem; height:2.2rem; border-radius:50%; background:{INK}; color:#fff;
+  font-weight:900; align-items:center; justify-content:center; margin-bottom:.7rem;}}
+.ruled .t {{font-weight: 900; color: #1F2430; font-size: 1.2rem; margin-bottom:.35rem;}}
+.ruled .d {{color: #4A5260; font-size:.97rem; line-height:1.5;}}
+.stButton button[kind="primary"] {{border-radius:999px; font-weight:800; padding:.65rem 1.4rem; font-size:1.05rem;}}
+section[data-testid="stSidebar"] {{background: #FFFFFF !important; border-right: 1px solid #ECE7DC !important;}}
+section[data-testid="stSidebar"] div[role="radiogroup"] label {{border-radius: 12px !important; border-left: 0 !important; margin-bottom:2px;}}
+section[data-testid="stSidebar"] label[data-testid="stRadioOption"][data-selected="true"] {{background:#E6ECF8 !important;}}
+.brand {{font-weight: 900 !important; font-size: 1.9rem !important;}}
+h2 {{font-weight: 900 !important; font-size: 2.1rem !important; color:#1F2430 !important;}}
+.kpi {{background:#FFFFFF; border:0; border-radius:18px; padding:.9rem 1.1rem; box-shadow:0 8px 24px rgba(31,36,48,.07);}}
+.kpi .v {{font-weight: 900 !important;}}
 
 @media (max-width: 700px) {{
-  .hero {{padding: 1.6rem 1rem 1.6rem 2rem;}}
-  .hero::before {{left: 1.1rem;}}
+  .stats {{grid-template-columns: 1fr 1fr;}}
   .flip .lbl {{width: auto;}}
-  .ruled .r {{grid-template-columns: 1fr; gap: .3rem;}}
+  .ruled {{grid-template-columns: 1fr;}}
 }}
 @media (prefers-reduced-motion: reduce) {{ * {{transition: none !important; animation: none !important;}} }}
 </style>
@@ -215,11 +223,20 @@ if page == "Главная":
     adj = demo["adj_means"].sort_values("mean", ascending=False).iloc[0]
     adj_of_raw = demo["adj_means"].set_index("textbook").loc[raw["textbook"], "mean"]
     n_txt = f"{len(demo['meta']):,}".replace(",", " ")
+    _, qt = tagger_quality()
+    q_ok, q_n = int(qt["ok"].sum()), len(qt)
     st.markdown(f"""
 <div class="hero">
-  <h1>Оқулықты пікір емес, дәлел таңдайды</h1>
-  <p class="sub">Учебник выбирают доказательства, а не мнения. «Дәлел» берёт результаты теста и показывает
-  методисту, какие темы провалены, почему и что изменить.</p>
+  <span class="eyebrow">Аналитика для методистов и школ</span>
+  <h1>Учебник выбирают <span class="acc">доказательства</span>, а не мнения</h1>
+  <p class="sub">«Дәлел» берёт результаты теста и за минуту показывает, какие темы провалены, почему
+  и что изменить: учебник, часы или работу со школами.</p>
+  <div class="stats">
+    <div class="stat"><div class="v">{n_txt}</div><div class="l">учеников в демо</div></div>
+    <div class="stat"><div class="v">{demo['meta']['school_id'].nunique()}</div><div class="l">школ</div></div>
+    <div class="stat"><div class="v red">{len(demo['weak'])}</div><div class="l">темы ниже цели 60%</div></div>
+    <div class="stat"><div class="v">{q_ok}/{q_n}</div><div class="l">заданий ИИ разметил верно</div></div>
+  </div>
   <div class="flip">
     <div class="q">Какой учебник даёт лучший результат?</div>
     <div class="row"><span class="lbl">По средним баллам</span>
@@ -259,12 +276,12 @@ if page == "Главная":
                 go_to("Обзор тем")
     st.markdown("""
 <div class="ruled">
-  <div class="r"><div class="t">Что провалено</div>
+  <div class="r"><div class="n">1</div><div class="t">Что провалено</div>
     <div class="d">Освоение каждой темы с 95% интервалом. Можно сравнить город и село, казахский и русский язык обучения.</div></div>
-  <div class="r"><div class="t">Почему</div>
+  <div class="r"><div class="n">2</div><div class="t">Почему</div>
     <div class="d">Для каждой слабой темы система называет причину: трудна сама тема, подводит учебник,
     отстают отдельные школы или в тесте плохое задание.</div></div>
-  <div class="r"><div class="t">Что изменить</div>
+  <div class="r"><div class="n">3</div><div class="t">Что изменить</div>
     <div class="d">Честное сравнение учебников, перераспределение часов при той же сумме и готовая записка
     для методсовета на казахском и русском.</div></div>
 </div>
