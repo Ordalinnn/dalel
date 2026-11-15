@@ -212,6 +212,29 @@ h4 {{font-weight:800 !important; color:#1F2430 !important;}}
   .bn + .bn {{border-left:0; border-top:1px solid #E7E2D7; padding-left:0;}}
   .chip.c1 {{left:.4rem;}} .chip.c2 {{right:.4rem;}}
 }}
+
+.take {{background:#FFFFFF; border-radius:20px; padding:1.1rem 1.4rem; margin:.2rem 0 1.4rem 0; box-shadow:0 8px 24px rgba(31,36,48,.07);
+  display:flex; gap:1rem; align-items:flex-start; border:2px solid #FFD866;}}
+.take .tk {{flex:none; background:#FFD866; color:#1F2430; font-weight:900; font-size:.8rem; border-radius:999px; padding:.3rem .8rem; margin-top:.15rem;}}
+.take p {{margin:0; font-size:1.12rem; font-weight:600; color:#1F2430; line-height:1.5; max-width:none;}}
+.take b {{color:{INK};}}
+.howto {{display:flex; flex-wrap:wrap; gap:.6rem 1.4rem; align-items:center; background:#F4F1EA; border-radius:16px; padding:.75rem 1rem; margin:.2rem 0 .8rem 0;}}
+.howto .hl {{font-weight:900; font-size:.8rem; text-transform:uppercase; letter-spacing:.06em; color:{PENCIL};}}
+.howto .hi {{display:flex; gap:.5rem; align-items:center; font-size:.92rem; color:#3F4757; font-weight:600; max-width:60ch;}}
+.howto svg {{flex:none;}}
+.wl b {{font-size:1.02rem; color:#1F2430;}}
+.wl .bar {{position:relative; height:10px; background:#EFEBE2; border-radius:999px; margin:.4rem 0 .3rem 0; max-width:420px;}}
+.wl .bar i {{position:absolute; left:0; top:0; bottom:0; background:{RED}; border-radius:999px;}}
+.wl .bar u {{position:absolute; top:-4px; bottom:-4px; width:2px; background:#1F2430;}}
+.wl span {{font-size:.86rem; color:{PENCIL}; font-weight:600;}}
+.pairs {{display:grid; grid-template-columns:repeat(3,1fr); gap:.8rem; margin-bottom:.4rem;}}
+.pc {{background:#FFFFFF; border-radius:18px; padding:1rem 1.1rem; box-shadow:0 8px 24px rgba(31,36,48,.07); border:2px solid transparent;}}
+.pc.ok {{border-color:{INK};}}
+.pc .pt {{font-weight:800; color:#1F2430;}}
+.pc .pv {{font-size:1.5rem; font-weight:900; color:{INK}; margin:.2rem 0;}}
+.pc .pb {{display:inline-block; font-size:.85rem; font-weight:800; border-radius:999px; padding:.2rem .7rem; background:#F4F1EA; color:{PENCIL};}}
+.pc.ok .pb {{background:#E6ECF8; color:{INK};}}
+@media (max-width: 800px) {{ .pairs {{grid-template-columns:1fr;}} .take {{flex-direction:column; gap:.5rem;}} }}
 @media (prefers-reduced-motion: reduce) {{ * {{transition: none !important; animation: none !important;}} }}
 </style>
 """, unsafe_allow_html=True)
@@ -263,6 +286,19 @@ def chart(fig, height):
 
 def lead(text):
     st.markdown(f'<p class="lead">{text}</p>', unsafe_allow_html=True)
+
+
+def takeaway(text):
+    st.markdown(f'<div class="take"><span class="tk">Главное</span><p>{text}</p></div>', unsafe_allow_html=True)
+
+
+def howto(*items):
+    glyph = {"dot": '<svg width="54" height="18" viewBox="0 0 54 18" aria-hidden="true"><line x1="6" y1="9" x2="48" y2="9" stroke="#1D3A8A" stroke-width="3" stroke-linecap="round"/><circle cx="27" cy="9" r="7" fill="#1D3A8A" stroke="#fff" stroke-width="2"/></svg>',
+             "red": '<svg width="18" height="18" aria-hidden="true"><circle cx="9" cy="9" r="7" fill="#C62828"/></svg>',
+             "goal": '<svg width="18" height="18" aria-hidden="true"><line x1="9" y1="1" x2="9" y2="17" stroke="#C62828" stroke-width="2" stroke-dasharray="3 3"/></svg>',
+             "size": '<svg width="30" height="18" aria-hidden="true"><circle cx="6" cy="11" r="4" fill="#8A93A3"/><circle cx="21" cy="9" r="8" fill="#8A93A3"/></svg>'}
+    body = "".join(f'<div class="hi">{glyph[g]}<span>{t}</span></div>' for g, t in items)
+    st.markdown(f'<div class="howto"><span class="hl">Как читать</span>{body}</div>', unsafe_allow_html=True)
 
 
 def kpi(col, value, label):
@@ -439,7 +475,11 @@ diag = {d["topic_code"]: d for d in A["diagnoses"]}
 
 if page == "Обзор тем":
     st.markdown("## Что провалено")
-    lead("Какие темы ученики освоили ниже целевого уровня и насколько это надёжно.")
+    lead("Какие темы ученики знают хуже, чем нужно, и можно ли этому верить.")
+    worst = A["mastery"].sort_values("mastery").iloc[0]
+    takeaway(f"<b>{len(A['weak'])} из {len(plan)}</b> тем ниже цели {pct(target)}. Слабее всего «{names[worst['topic_code']]}»: "
+             f"задания по ней решают верно только <b>{pct(worst['mastery'])}</b> учеников, то есть примерно "
+             f"{round(worst['mastery'] * 10)} из 10.")
     c = st.columns(4)
     kpi(c[0], f"{len(meta):,}".replace(",", " "), "учеников")
     kpi(c[1], meta["school_id"].nunique(), "школ")
@@ -475,7 +515,7 @@ if page == "Обзор тем":
             error_x=dict(type="data", symmetric=False, array=d["hi"] - d["mastery"],
                          arrayminus=d["mastery"] - d["lo"], color=col, thickness=2.2, width=0),
             customdata=d[["lo", "hi"]].to_numpy(),
-            hovertemplate="%{y}<br>освоение %{x:.0%}<br>интервал %{customdata[0]:.0%}–%{customdata[1]:.0%}<extra></extra>"))
+            hovertemplate="%{y}<br>решают верно %{x:.0%}<br>скорее всего от %{customdata[0]:.0%} до %{customdata[1]:.0%}<extra></extra>"))
         fig.add_trace(go.Scatter(   # подпись справа от интервала, чтобы не налезала на линию
             x=d["hi"], y=d["topic_name"], mode="text", text=[f"  <b>{pct(v)}</b>" for v in d["mastery"]],
             textposition="middle right", textfont=dict(color=col, size=13), cliponaxis=False, hoverinfo="skip"))
@@ -485,15 +525,19 @@ if page == "Обзор тем":
                       yaxis=dict(categoryorder="array", categoryarray=list(m["topic_name"])[::-1],
                                  showgrid=False, tickfont=dict(size=13)))
     chart(fig, 44 * len(m) + 70)
-    st.markdown(f'<div class="note">Точка — доля верных ответов по теме, линия — 95% интервал (бутстреп по школам). Красным — темы ниже цели. '
-                f'В расчёте {len(sub_meta)} учеников, {sub_meta["school_id"].nunique()} школ.</div>',
+    howto(("dot", "точка: какая доля заданий по теме решена верно; полоска: где почти наверняка лежит настоящий результат. Чем короче полоска, тем точнее"),
+          ("red", "красные темы ниже цели"), ("goal", f"пунктир: цель {pct(target)}"))
+    st.markdown(f'<div class="note">В расчёте {len(sub_meta)} учеников, {sub_meta["school_id"].nunique()} школ.</div>',
                 unsafe_allow_html=True)
 
     st.markdown("#### Темы ниже цели")
     weak_box = st.container(key="weaklist")
     for d in A["diagnoses"]:
         cc = weak_box.columns([3, 2, 1], vertical_alignment="center")
-        cc[0].markdown(f"**{names[d['topic_code']]}** — {pct(d['mastery'])}")
+        gap = (target - d["mastery"]) * 100
+        cc[0].markdown(f'<div class="wl"><b>{names[d["topic_code"]]}</b><div class="bar"><i style="width:{d["mastery"] * 100:.0f}%"></i>'
+                       f'<u style="left:{target * 100:.0f}%"></u></div><span>{pct(d["mastery"])} · не хватает {gap:.0f} пунктов до цели</span></div>',
+                       unsafe_allow_html=True)
         cc[1].markdown(f'<span class="cause">{core.CAUSES.get(d["cause"], ("Недостаточно данных",))[0]}</span>',
                        unsafe_allow_html=True)
         if cc[2].button("Открыть", key=f"open_{d['topic_code']}"):
@@ -502,10 +546,10 @@ if page == "Обзор тем":
 
     flagged = A["items"][A["items"]["flagged"]]
     if len(flagged):
-        with st.expander(f"Задания с низкой различающей способностью: {len(flagged)}"):
+        with st.expander(f"Подозрительные задания (не отличают сильных учеников от слабых): {len(flagged)}"):
             st.dataframe(flagged[["item_id", "topic_code", "item_text", "p_correct", "discrimination"]]
                          .rename(columns={"item_id": "Задание", "topic_code": "Тема", "item_text": "Текст",
-                                          "p_correct": "Доля верных", "discrimination": "Различающая способность"}),
+                                          "p_correct": "Доля верных", "discrimination": "Отличает сильных от слабых"}),
                          hide_index=True, use_container_width=True)
 
 
@@ -513,14 +557,19 @@ if page == "Обзор тем":
 
 elif page == "Учебники":
     st.markdown("## Какой учебник работает лучше")
-    lead("Переключите режим: сырые средние смешивают эффект учебника с составом школ, которые его выбрали.")
-    mode = st.segmented_control("Режим сравнения", ["Сырые средние", "С поправками"], default="Сырые средние",
-                                key="tb_mode") or "Сырые средние"
+    lead("Простое среднее нечестно: сильные школы чаще выбирают один учебник. Режим «С поправками» сравнивает учебники на одинаковых учениках.")
+    mode = st.segmented_control("Режим сравнения", ["Простое среднее", "С поправками"], default="Простое среднее",
+                                key="tb_mode") or "Простое среднее"
     adj = mode == "С поправками"
     means = A["adj_means"] if adj else A["raw_means"]
     pairs = A["adj_pairs"] if adj else A["raw_pairs"]
     best = means.sort_values("mean").iloc[-1]["textbook"]
 
+    if adj:
+        takeaway(f"На одинаковых учениках лучший результат у <b>«{best}»</b>: {pct(means.set_index('textbook').loc[best, 'mean'])}.")
+    else:
+        takeaway(f"По простому среднему впереди «{best}». Но это может быть заслуга сильных школ, а не учебника. "
+                 "Переключите на <b>«С поправками»</b>.")
     win_col = INK if adj else RED
     fig = go.Figure()
     for r in means.itertuples():
@@ -532,7 +581,7 @@ elif page == "Учебники":
                          color=c, thickness=3, width=0),
             text=[f"<b>{pct(r.mean)}</b>"], textposition="top center", textfont=dict(color=c, size=15),
             cliponaxis=False,
-            hovertemplate=(f"{r.textbook}: %{{x:.1%}}<br>интервал {r.lo:.1%}–{r.hi:.1%}"
+            hovertemplate=(f"{r.textbook}: %{{x:.1%}}<br>скорее всего от {r.lo:.1%} до {r.hi:.1%}"
                            f"<br>учеников {r.n_students}, школ {r.n_schools}<extra></extra>")))
     lo = min(A["raw_means"]["lo"].min(), A["adj_means"]["lo"].min()) - 0.02
     hi = max(A["raw_means"]["hi"].max(), A["adj_means"]["hi"].max()) + 0.02
@@ -541,27 +590,27 @@ elif page == "Учебники":
                       yaxis=dict(categoryorder="array", categoryarray=sorted(means["textbook"])[::-1],
                                  showgrid=True, tickfont=dict(size=14)))
     chart(fig, 300)
-    st.markdown('<div class="note">Шкала одинакова в обоих режимах, поэтому видно, как сдвигаются точки.</div>',
-                unsafe_allow_html=True)
+    howto(("dot", "точка: средний результат по учебнику; полоска: где почти наверняка лежит настоящий результат"),
+          ("goal", "шкала одна в обоих режимах: переключите и посмотрите, как сдвинутся точки"))
 
     if adj:
         st.markdown(f'<div class="verdict">С поправкой на прошлый балл, тип местности и язык обучения '
                     f'лучший результат у «{best}».</div>', unsafe_allow_html=True)
         st.markdown('<div class="note">Учебники сравниваются на одном и том же «среднем» ученике. '
                     'Интервалы учитывают, что ученики одной школы похожи друг на друга.</div>', unsafe_allow_html=True)
-    else:
-        st.markdown(f'<div class="verdict wrong">По сырым средним лучший — «{best}». Но учебники выбирают школы '
-                    f'с разным составом учеников.<span class="pen">проверьте с поправками</span></div>',
-                    unsafe_allow_html=True)
 
-    rows = []
+    st.markdown("#### Попарно: чья разница надёжна")
+    cards = ""
     for r in pairs.itertuples():
-        better = r.b if r.diff_b_minus_a > 0 else r.a
-        lo_, hi_ = (r.lo, r.hi) if r.diff_b_minus_a > 0 else (-r.hi, -r.lo)
-        rows.append({"Пара": f"{r.a} — {r.b}", "Разница": f"{abs(r.diff_b_minus_a) * 100:.1f} п.п. в пользу «{better}»",
-                     "95% интервал разницы": f"{lo_ * 100:+.1f} … {hi_ * 100:+.1f} п.п.",
-                     "Вывод": "подтверждено" if r.confirmed else "различие не подтверждено"})
-    st.dataframe(pd.DataFrame(rows), hide_index=True, use_container_width=True)
+        better, worse = (r.b, r.a) if r.diff_b_minus_a > 0 else (r.a, r.b)
+        ok = bool(r.confirmed)
+        dtxt = f"{abs(r.diff_b_minus_a) * 100:.1f}".replace(".", ",")
+        cards += (f'<div class="pc{" ok" if ok else ""}"><div class="pt">«{better}» лучше «{worse}»</div>'
+                  f'<div class="pv">на {dtxt} пункта</div>'
+                  f'<div class="pb">{"✓ разница надёжная" if ok else "≈ может быть случайностью"}</div></div>')
+    st.markdown(f'<div class="pairs">{cards}</div>', unsafe_allow_html=True)
+    st.markdown('<div class="note">«Надёжная» значит, что разница остаётся, даже если взять другие школы того же типа '
+                '(95% интервал не пересекает ноль).</div>', unsafe_allow_html=True)
 
     st.markdown("#### Почему ответы расходятся")
     ba = A["by_area"].copy()
@@ -589,8 +638,7 @@ elif page == "Учебники":
                                   range=[-0.6, len(order) - 0.3]))
     chart(fig2, 330)
     share = meta.groupby("textbook")["area"].apply(lambda s: (s == "город").mean())
-    st.markdown('<div class="note">Размер точки — число учеников. Нижняя строка — общее среднее без поправки.</div>',
-                unsafe_allow_html=True)
+    howto(("size", "чем больше кружок, тем больше учеников"), ("goal", "серая нижняя строка: общее среднее без поправки"))
     st.write("Доля городских учеников: " + ", ".join(f"«{k}» {pct(v)}" for k, v in share.items()) +
              ". И в городе, и в селе порядок учебников один, а в общем среднем он переворачивается: "
              "учебник, который чаще берут городские школы, выигрывает за счёт состава учеников. "
@@ -609,7 +657,7 @@ elif page == "Тема":
     lead("Почему тема проседает и какую меру выбрать: часы, материалы к учебнику, поддержку школ или замену задания.")
     c = st.columns(3)
     kpi(c[0], pct(mrow["mastery"]), "освоение темы")
-    kpi(c[1], f"{pct(mrow['lo'])}–{pct(mrow['hi'])}", "95% интервал")
+    kpi(c[1], f"{pct(mrow['lo'])}–{pct(mrow['hi'])}", "надёжный диапазон")
     kpi(c[2], pct(target), "цель")
     st.write("")
 
@@ -643,10 +691,10 @@ elif page == "Тема":
                 marker=dict(size=13, color=col, line=dict(color="white", width=1.5)),
                 error_x=dict(type="data", symmetric=False, array=[(r.hi - r.effect) * 100],
                              arrayminus=[(r.effect - r.lo) * 100], color=col, thickness=2.2, width=0),
-                text=[f"{r.effect * 100:+.0f} п.п."], textposition="top center", textfont=dict(color=col, size=12),
-                cliponaxis=False, hovertemplate=f"{r.textbook}: %{{x:+.1f}} п.п.<extra></extra>"))
+                text=[f"{r.effect * 100:+.0f} пунктов"], textposition="top center", textfont=dict(color=col, size=12),
+                cliponaxis=False, hovertemplate=f"{r.textbook}: %{{x:+.1f}} пунктов<extra></extra>"))
         fig.update_layout(showlegend=False, margin=dict(l=10, r=10, t=24, b=10),
-                          xaxis=dict(range=[-span, span], title="п.п. относительно других учебников",
+                          xaxis=dict(range=[-span, span], title="пунктов выше или ниже других учебников",
                                      zeroline=False),
                           yaxis=dict(categoryorder="array", categoryarray=sorted(eff["textbook"])[::-1],
                                      tickfont=dict(size=13)))
@@ -654,10 +702,10 @@ elif page == "Тема":
     with t2:
         st.markdown("##### Какие школы отстают")
         sch = core.school_topic_effect(sc, meta, code)
-        sch = sch.assign(**{"Отклонение, п.п.": (sch["shrunk"] * 100).round(1), "Освоение": (sch["score"] * 100).round(0)})
+        sch = sch.assign(**{"Отстаёт от района, пунктов": (sch["shrunk"] * 100).round(1), "Освоение": (sch["score"] * 100).round(0)})
         sch["Статус"] = [("мало учеников" if n < 20 else "ниже ожидаемого" if s <= -core.SCHOOL_GAP else "")
                          for n, s in zip(sch["n"], sch["shrunk"])]
-        st.dataframe(sch[["school_id", "n", "Освоение", "Отклонение, п.п.", "Статус"]].head(10)
+        st.dataframe(sch[["school_id", "n", "Освоение", "Отстаёт от района, пунктов", "Статус"]].head(10)
                      .rename(columns={"school_id": "Школа", "n": "Учеников"}),
                      hide_index=True, use_container_width=True, height=250)
 
@@ -665,8 +713,8 @@ elif page == "Тема":
     ti = A["items"][A["items"]["topic_code"] == code].copy()
     ti["Статус"] = ["проверить задание" if f else "" for f in ti["flagged"]]
     ti["Доля верных"] = (ti["p_correct"] * 100).round(0)
-    ti["Различающая способность"] = ti["discrimination"].round(2)
-    st.dataframe(ti[["item_id", "item_text", "Доля верных", "Различающая способность", "Статус"]]
+    ti["Отличает сильных от слабых"] = ti["discrimination"].round(2)
+    st.dataframe(ti[["item_id", "item_text", "Доля верных", "Отличает сильных от слабых", "Статус"]]
                  .rename(columns={"item_id": "Задание", "item_text": "Текст"}),
                  hide_index=True, use_container_width=True)
     st.markdown('<div class="note">Различающая способность ниже 0,10 значит, что задание одинаково часто решают '
@@ -680,7 +728,7 @@ elif page == "Часы":
     h = A["hours"].copy()
     total = int(h["hours"].sum())
     lead(f"Сумма часов не меняется: {total} ч. Часы получают темы с диагнозом «трудна сама тема», "
-         "отдают темы с запасом над целью не меньше 10 п.п. Изменение темы не больше 20% её часов.")
+         "отдают темы с запасом над целью не меньше 10 пунктов Изменение темы не больше 20% её часов.")
     ch = h[h["delta"] != 0].sort_values("delta", ascending=False)
     if len(ch):
         fig = go.Figure(go.Bar(

@@ -232,7 +232,7 @@ def diagnose(topic, scores_all, scores_clean, meta, mastery_all, target, flagged
         if worst["effect"] <= -TEXTBOOK_GAP and worst["hi"] < 0:
             d.update(cause="textbook", textbook=worst["textbook"], effect=float(worst["effect"]),
                      details=(f"С учебником «{worst['textbook']}» тема усвоена на "
-                              f"{abs(worst['effect']) * 100:.0f} п.п. хуже, чем с остальными, "
+                              f"{abs(worst['effect']) * 100:.0f} пунктов хуже, чем с остальными, "
                               f"при том же общем уровне учеников."))
             return d
 
