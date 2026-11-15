@@ -14,12 +14,15 @@ st.set_page_config(page_title="Дәлел — аналитика учебных 
                    initial_sidebar_state="auto")
 
 DATA = Path(__file__).parent / "data"
-INK = "#1D3A8A"        # синяя паста
-RED = "#C62828"        # красная ручка учителя
-PENCIL = "#8A93A3"     # карандаш: нейтральные данные
-GRAPHITE = "#2B3140"   # основной текст
-GRID = "#E4EBF5"       # клетка тетради
-GREEN = "#2E7D5B"
+INK = "#5578E8"        # яркий синий
+RED = "#F17878"        # мягкий коралловый
+PENCIL = "#9AA7BC"     # спокойный серо-голубой
+GRAPHITE = "#29334A"   # основной текст
+GRID = "#E8ECF5"       # мягкая сетка
+GREEN = "#55B99A"
+MINT = "#67CDB8"
+LILAC = "#A895E8"
+SUN = "#F4C75E"
 ACCENT, GREY = INK, PENCIL
 
 FONTS_CSS = (Path(__file__).parent / "static" / "fonts.css").read_text(encoding="utf-8")
@@ -239,13 +242,13 @@ h4 {{font-weight:800 !important; color:#1F2430 !important;}}
 
 /* ===== DALEL PRODUCT UI/UX POLISH ===== */
 :root {{
-  --dl-bg: #F4F6FB;
+  --dl-bg: #F7F8FD;
   --dl-surface: #FFFFFF;
-  --dl-ink: #243B80;
-  --dl-text: #202A3B;
-  --dl-muted: #77839A;
-  --dl-border: #E5EAF3;
-  --dl-shadow: 0 12px 32px rgba(28, 39, 71, .07);
+  --dl-ink: #5578E8;
+  --dl-text: #29334A;
+  --dl-muted: #7F8BA3;
+  --dl-border: #E8ECF5;
+  --dl-shadow: 0 12px 32px rgba(67, 86, 145, .08);
 }}
 .stApp {{ background: var(--dl-bg); color: var(--dl-text); }}
 [data-testid="stHeader"] {{ background: rgba(244,246,251,.9); }}
@@ -300,12 +303,20 @@ section[data-testid="stSidebar"] [data-testid="stCaptionContainer"] p {{ color: 
   box-shadow: 0 5px 18px rgba(28,39,71,.035);
 }}
 [data-testid="stPlotlyChart"] {{
-  background: #FFFFFF;
-  border: 1px solid var(--dl-border);
-  border-radius: 16px;
-  padding: .55rem;
-  box-shadow: 0 5px 18px rgba(28,39,71,.035);
+  background: linear-gradient(145deg, #FFFFFF 0%, #FBFCFF 100%);
+  border: 2px solid #FFFFFF;
+  border-radius: 26px;
+  padding: .55rem .7rem .35rem;
+  box-shadow: 0 12px 28px rgba(67,86,145,.09), 0 3px 0 rgba(85,120,232,.06);
+  transition: transform .18s ease, box-shadow .18s ease;
+  margin-bottom: .85rem;
 }}
+[data-testid="stPlotlyChart"]:hover {{
+  box-shadow: 0 16px 34px rgba(67,86,145,.13), 0 3px 0 rgba(85,120,232,.08);
+  transform: translateY(-2px);
+}}
+[data-testid="stPlotlyChart"] .modebar {{ opacity: .35; }}
+[data-testid="stPlotlyChart"] .modebar:hover {{ opacity: 1; }}
 [data-testid="stDataFrame"] {{
   border: 1px solid var(--dl-border);
   border-radius: 12px;
@@ -390,7 +401,27 @@ def tb_color(tb, all_tbs):
 
 
 def chart(fig, height):
-    fig.update_layout(height=height, plot_bgcolor="#FFFFFF", paper_bgcolor="#FFFFFF")
+    # Единый дружелюбный стиль графиков: мягкая сетка, крупные подписи и округлые маркеры.
+    fig.update_layout(
+        height=height, plot_bgcolor="rgba(255,255,255,0)", paper_bgcolor="rgba(255,255,255,0)",
+        font=dict(family="Nunito, sans-serif", color=GRAPHITE, size=14),
+        margin=dict(l=18, r=28, t=28, b=22),
+        hoverlabel=dict(bgcolor="#29334A", bordercolor="#29334A",
+                        font=dict(family="Nunito, sans-serif", color="#FFFFFF", size=13)),
+    )
+    fig.update_xaxes(gridcolor="#E8ECF5", griddash="dot", gridwidth=1,
+                     zerolinecolor="#D8DFEC", zerolinewidth=1.5,
+                     linecolor="rgba(0,0,0,0)", tickfont=dict(color="#7F8BA3", size=12),
+                     title_font=dict(color="#65728A", size=13))
+    fig.update_yaxes(gridcolor="rgba(232,236,245,0.55)", griddash="dot",
+                     linecolor="rgba(0,0,0,0)", tickfont=dict(color=GRAPHITE, size=13))
+    for trace in fig.data:
+        if getattr(trace, "type", None) == "bar":
+            trace.marker.line = dict(color="#FFFFFF", width=2)
+            trace.opacity = 0.96
+        elif getattr(trace, "type", None) == "scatter":
+            if getattr(trace, "mode", None) and "markers" in trace.mode:
+                trace.marker.line = dict(color="#FFFFFF", width=3)
     st.plotly_chart(fig, use_container_width=True, config=PLOT_CFG)
 
 
